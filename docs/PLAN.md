@@ -60,6 +60,24 @@ Taxes to model now, not later: India delivery gains held under 1 year are STCG a
 
 ---
 
+## 2b. What the engine actually trades, and where calls/puts fit
+
+**Today, both legs: buy stocks and ETFs, hold while the trend holds, sell when it breaks.** No shorting, no leverage, no derivatives. India: delivery (CNC) on NSE. US: cash account on Alpaca, fractional shares, ETFs and mega caps. A position that has gone up is sold either when price closes back under its 200-day average (trend broken) or when the weekly rebalance trims it because another asset now deserves more weight.
+
+**Options (calls and puts) are Phase 4, not Phase 1, for arithmetic reasons, not caution:**
+
+| Fact (verified Sep 2026) | Consequence for ₹50k |
+|---|---|
+| Nifty lot = 65 units, contract value ₹15 to 20 lakh by SEBI rule | One contract is 30 to 40x our India capital |
+| Margin to sell one Nifty option: ₹1.5 to 2 lakh | Selling is impossible below ~₹4 lakh capital (need buffer for adverse moves) |
+| Buying one at-the-money weekly Nifty option: ₹8k to 15k premium | Possible, but 20 to 30% of the book on one bet that decays every day |
+| SEBI FY26 study: 87.7% of individual F&O traders lost money; options were 92% of losses; option **sellers** were the only group with positive median return | The buyer side is where retail money goes to die. The seller side needs capital we do not have yet |
+| 59% of index-option turnover happens on expiry day | This is a professional's game against retail impatience |
+
+Our edge is slow: trends measured in weeks and months. Options bleed value daily, so a slow edge expressed through bought options is worse than the same edge expressed through the underlying. When the India book reaches roughly ₹20 lakh (one Nifty lot of NIFTYBEES-equivalent exposure), covered calls and cash-secured puts become a yield overlay on holdings we already own, historically worth 5 to 10% a year on top. That is the version of "playing calls and puts" that survives.
+
+**US leg, leverage without expiry:** leveraged ETFs (SSO 2x S&P, TQQQ 3x Nasdaq) give options-like exposure with no expiry and no theta, only volatility drag. Trend-filtered leveraged ETF is a well-known retail-feasible strategy. Added to Phase 1 as a test item: `trend` on QQQ with a capped TQQQ sleeve, judged by drawdown, not CAGR. Nothing changes until it passes walk-forward.
+
 ## 3. Phases, gates and kill criteria
 
 Every phase has a gate. We do not move until the gate is passed. This is what separates an engine from a gamble.
@@ -92,7 +110,7 @@ Every phase has a gate. We do not move until the gate is passed. This is what se
 * Gate to scale capital: 3 consecutive months where live tracks backtest and drawdown stayed inside limits. Then add capital in steps of 50%, never doubling.
 
 ### Phase 4 — Expansion (month 7+, only if Phase 3 passed)
-* Options overlays (covered calls / cash-secured puts on Nifty ETFs via Groww or Zerodha) for yield.
+* Options overlays (covered calls / cash-secured puts) once the India book can cover one Nifty lot (~₹20 lakh) plus margin buffer. Seller side only, on holdings we own, never naked.
 * Pairs / stat-arb book.
 * Intraday only if intraday data proves it net of costs AND a static-IP VPS is running.
 * Rent the engine: same code serving family accounts is a second income line, but only after your own track record exists.
