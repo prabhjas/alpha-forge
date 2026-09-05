@@ -3,11 +3,18 @@
 Research, backtesting and paper-trading engine for NSE (India) + US equities.
 Long-only, cost-aware, risk-managed, paper-first. Read `docs/PLAN.md` first.
 
+## Environments
+Two virtualenvs, on purpose:
+* `.venv313` (Python 3.13, Homebrew) - **primary**. Everything incl. skfolio sizing.
+* `.venv` (Python 3.9, system) - kept only for the Kronos experiment (`research/`), whose pinned deps predate 3.13.
+
 ## Quick start
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
+/opt/homebrew/bin/python3.13 -m venv .venv313 && . .venv313/bin/activate
+pip install -r requirements.txt skfolio
 pytest -q
+python scripts/walk_forward_report.py        # walk-forward + parameter plateaus -> docs/WALK_FORWARD.md
+python scripts/skfolio_sizing_report.py      # inverse-vol vs HRP / risk parity / min-var -> docs/SKFOLIO_SIZING.md
 python scripts/backtest.py --strategy momentum --universe nifty50 --costs india_delivery --save
 python scripts/backtest.py --strategy trend --universe us_core --costs us_alpaca --save
 python scripts/research_report.py            # full scoreboard -> docs/RESULTS.md
