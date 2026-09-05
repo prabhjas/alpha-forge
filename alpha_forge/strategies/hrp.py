@@ -37,9 +37,9 @@ class TrendHRP(Strategy):
         if p["model"] == "hrp":
             return HierarchicalRiskParity(risk_measure=RiskMeasure.VARIANCE, prior_estimator=prior)
         if p["model"] == "riskparity":
-            return RiskBudgeting(risk_measure=RiskMeasure.VARIANCE, prior_estimator=prior, max_weights=p["max_weight"])
+            return RiskBudgeting(risk_measure=RiskMeasure.VARIANCE, prior_estimator=prior)  # cap applied after fit
         if p["model"] == "minvar":
-            return MeanRisk(risk_measure=RiskMeasure.VARIANCE, prior_estimator=prior, max_weights=p["max_weight"])
+            return MeanRisk(risk_measure=RiskMeasure.VARIANCE, prior_estimator=prior)  # cap applied after fit
         if p["model"] == "invvol":
             return InverseVolatility(prior_estimator=prior)
         raise ValueError(p["model"])
@@ -72,8 +72,13 @@ class TrendHRP(Strategy):
                     w = iv / iv.sum()
                     row[w.index] = w.clip(upper=p["max_weight"]).values
                 elif X.shape[1] >= 3 and len(X) > 60:
-                    alloc.fit(X)
-                    w = pd.Series(alloc.weights_, index=X.columns).clip(lower=0)
+                    try:
+                        alloc.fit(X)
+                        w = pd.Series(alloc.weights_, index=X.columns).clip(lower=0)
+                    except Exception as e:  # solver hiccup -> inverse-vol for this month, never crash a live run
+                        print(f"[trend_hrp] {ts.date()} {p['model']} fit failed ({type(e).__name__}); inverse-vol fallback")
+                        iv = 1.0 / X.std()
+                        w = iv
                     w = w / w.sum() if w.sum() > 0 else w
                     # cap, then renormalise the excess into cash (no leverage, never breach cap)
                     w = w.clip(upper=p["max_weight"])
