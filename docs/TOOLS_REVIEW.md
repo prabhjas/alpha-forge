@@ -23,7 +23,15 @@ The top comment on the post asked the right question: a model can look 85% confi
 | Brier score (lower is better) | 0.312 | 0.395 | below the constant base-rate forecast (0.250 / 0.247) |
 | Median 10-90% forecast band vs actual move | 3.4x | 4.9x | near 1x |
 
-Reliability: when Kronos said P(up) was 11 to 18%, the market actually went up 52 to 57% of the time. When it said 81 to 83%, the market went up 46 to 61% of the time. Its confidence carries no information at 1-day horizon, and the Brier score is worse than simply guessing the historical up-rate every day. The forecast band is 3 to 5 times wider than the move it is forecasting, which is the "band wider than the move" failure the comment predicted.
+| 5-day horizon (120 forecasts) | NIFTYBEES | SPY | What a useful model needs |
+|---|---|---|---|
+| Directional accuracy of point forecast | 53.3% | 41.7% | above the always-up base rate (47.5% / 58.3%) |
+| Brier score (lower is better) | 0.293 | 0.420 | below the constant base-rate forecast (0.260 / 0.244) |
+| Median 10-90% forecast band vs actual move | 2.8x | 3.7x | near 1x |
+
+At 5 days Kronos is weakly right on Nifty direction, but its probabilities are still worse than the base rate, and on SPY it was bearish in 88 of 120 weeks while the index rose in 58% of them. Full tables: `docs/KRONOS_EVAL_h5.md`.
+
+Reliability at 1 day: when Kronos said P(up) was 11 to 18%, the market actually went up 52 to 57% of the time. When it said 81 to 83%, the market went up 46 to 61% of the time. Its confidence carries no information at 1-day horizon, and the Brier score is worse than simply guessing the historical up-rate every day. The forecast band is 3 to 5 times wider than the move it is forecasting, which is the "band wider than the move" failure the comment predicted.
 
 This is not a knock on the research. Kronos was benchmarked on forecasting error of the price path, and the authors say plainly that their trading example is not a production system. It just means the impressive-looking demo is not a trading edge. If we ever use it, it would be as one feature among many, fine-tuned on NSE data, and it would have to earn its place through the same walk-forward test as everything else.
 
