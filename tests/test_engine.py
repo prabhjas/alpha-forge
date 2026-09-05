@@ -44,3 +44,14 @@ def test_gross_exposure_capped():
 
     res = Backtester(CostModel("t", 0, 0, 0), 100).run(Levered(), _prices())
     assert res.weights.abs().sum(axis=1).max() <= 1.0 + 1e-9
+
+
+def test_risk_state_is_per_account(tmp_path, monkeypatch):
+    from alpha_forge.risk import manager as rm
+    monkeypatch.setattr(rm, "STATE_FILE", tmp_path / "risk_state.json")
+    a = rm.RiskManager(account="india"); a.update_equity(50_000)
+    b = rm.RiskManager(account="us"); b.update_equity(570)
+    # the tiny US book must not be judged against the India book's peak
+    d = b.evaluate(570, {"SPY": 0.5}, n_orders=1)
+    assert d.allowed and d.scale == 1.0
+    assert a.state_file != b.state_file

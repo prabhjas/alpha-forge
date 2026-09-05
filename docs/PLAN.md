@@ -72,6 +72,8 @@ Every phase has a gate. We do not move until the gate is passed. This is what se
 1. ✅ Walk-forward validation of every strategy (train 3y / test 1y, rolling). Results in `docs/WALK_FORWARD.md`: trend and momentum beat their benchmark out of sample in all three universes with 100% of the parameter grid above benchmark; mean reversion fails in India after costs and is retired from the India book.
 2. ✅ Parameter robustness: plateau heat maps in `docs/WALK_FORWARD.md`. Trend parameters are stable across halves of history (rank corr 0.57 to 0.58 on stocks); momentum parameters are noise but every set works, which is fine.
 2b. ✅ skfolio sizing tested (`docs/SKFOLIO_SIZING.md`): inverse-vol stays default; risk parity to be A/B tested on the Nifty 50 leg in paper.
+2c. ✅ Pairs / stat-arb tested (`docs/PAIRS.md`): tiny gross edge, destroyed by retail costs. Retired.
+2d. ✅ Daily automation installed (launchd: India 16:00 IST Mon-Fri, US 03:00 IST Tue-Sat, morning brief 08:30 IST). Paper books running: india_paper (trend/ETF), us_paper (trend/US), india_ab_trend vs india_ab_hrp (Nifty 50 A/B).
 3. Cost sensitivity: double the slippage assumption. If the edge disappears, it was never there.
 4. Regime slices: 2018 (sideways), 2020 (crash), 2022 (rate shock), 2024-26. Know what each strategy does in each.
 5. Add strategies in order of evidence: momentum (strongest academic record incl. NSE), trend, mean-reversion on ETFs only, then pairs/stat-arb on Nifty 50, then intraday ORB only if broker intraday data confirms it after costs.

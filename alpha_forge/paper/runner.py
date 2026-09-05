@@ -56,7 +56,7 @@ def run_daily(strategy_name: str, universe: str, broker: Broker, params: Dict = 
     last_px = {t: float(closes[t].dropna().iloc[-1]) for t in closes.columns}
     if hasattr(broker, "set_prices"):
         broker.set_prices(last_px)  # paper broker fills at last close
-    risk = RiskManager()
+    risk = RiskManager(account=getattr(broker, 'account', broker.name))
     orders = rebalance_to_targets(broker, targets, last_px, risk, fractional, tag=strategy_name)
     fills = broker.place_all(orders) if orders else []
     risk.record_orders(len(fills))

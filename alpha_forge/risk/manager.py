@@ -37,9 +37,10 @@ class RiskDecision:
 
 
 class RiskManager:
-    def __init__(self, limits: Optional[RiskLimits] = None, state_file: Path = STATE_FILE):
+    def __init__(self, limits: Optional[RiskLimits] = None, state_file: Optional[Path] = None, account: str = "default"):
         self.limits = limits or RiskLimits()
-        self.state_file = state_file
+        # one state file per account: a Rs 50k India book and a $570 US book must never share a peak-equity number
+        self.state_file = state_file or (STATE_FILE.parent / f"risk_state_{account}.json")
         self.state = self._load()
 
     def _load(self) -> Dict:
