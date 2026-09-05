@@ -1,0 +1,13 @@
+pandas>=2.0
+numpy>=1.26
+yfinance>=0.2.40
+pyyaml
+rich
+matplotlib
+tabulate
+python-dotenv
+pytest
+alpaca-py
+kiteconnect
+# smartapi-python  # Angel One - install only when you set up that broker
+# pyotp

@@ -1,0 +1,94 @@
+# Trading universes. Yahoo Finance tickers. NSE tickers end with .NS
+# Keep universes LIQUID - illiquid names make backtests lie (slippage).
+
+nifty50:
+  - RELIANCE.NS
+  - TCS.NS
+  - HDFCBANK.NS
+  - ICICIBANK.NS
+  - INFY.NS
+  - BHARTIARTL.NS
+  - ITC.NS
+  - SBIN.NS
+  - LT.NS
+  - HINDUNILVR.NS
+  - KOTAKBANK.NS
+  - AXISBANK.NS
+  - BAJFINANCE.NS
+  - MARUTI.NS
+  - SUNPHARMA.NS
+  - TITAN.NS
+  - ASIANPAINT.NS
+  - HCLTECH.NS
+  - ULTRACEMCO.NS
+  - NTPC.NS
+  - POWERGRID.NS
+  - M&M.NS
+  - TATAMOTORS.NS
+  - TATASTEEL.NS
+  - JSWSTEEL.NS
+  - ADANIENT.NS
+  - ADANIPORTS.NS
+  - ONGC.NS
+  - COALINDIA.NS
+  - WIPRO.NS
+  - TECHM.NS
+  - NESTLEIND.NS
+  - BAJAJFINSV.NS
+  - GRASIM.NS
+  - HINDALCO.NS
+  - CIPLA.NS
+  - DRREDDY.NS
+  - DIVISLAB.NS
+  - EICHERMOT.NS
+  - HEROMOTOCO.NS
+  - BRITANNIA.NS
+  - APOLLOHOSP.NS
+  - INDUSINDBK.NS
+  - TATACONSUM.NS
+  - BPCL.NS
+  - SBILIFE.NS
+  - HDFCLIFE.NS
+  - BAJAJ-AUTO.NS
+  - SHRIRAMFIN.NS
+  - TRENT.NS
+
+# Cheap, liquid Indian ETFs - the safest place for the first live rupee.
+india_etf:
+  - NIFTYBEES.NS
+  - JUNIORBEES.NS
+  - BANKBEES.NS
+  - GOLDBEES.NS
+  - ITBEES.NS
+  - MON100.NS
+
+# Benchmarks
+india_benchmark:
+  - ^NSEI
+
+# US liquid mega-caps + sector ETFs (Alpaca supports fractional shares, so
+# a $600 account can still hold a diversified basket).
+us_core:
+  - SPY
+  - QQQ
+  - IWM
+  - GLD
+  - TLT
+  - XLK
+  - XLF
+  - XLE
+  - XLV
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+  - META
+  - AVGO
+  - JPM
+  - BRK-B
+  - LLY
+  - COST
+
+us_benchmark:
+  - SPY
