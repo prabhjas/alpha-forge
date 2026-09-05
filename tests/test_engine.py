@@ -52,6 +52,6 @@ def test_risk_state_is_per_account(tmp_path, monkeypatch):
     a = rm.RiskManager(account="india"); a.update_equity(50_000)
     b = rm.RiskManager(account="us"); b.update_equity(570)
     # the tiny US book must not be judged against the India book's peak
-    d = b.evaluate(570, {"SPY": 0.5}, n_orders=1)
+    d = b.evaluate(570, {"SPY": 0.2, "QQQ": 0.2}, n_orders=2)
     assert d.allowed and d.scale == 1.0
     assert a.state_file != b.state_file
