@@ -38,6 +38,9 @@ Subclass `alpha_forge.strategies.base.Strategy`, implement `generate_weights(pri
 FORCE=1 ./scripts/daily.sh india # run a leg by hand (FORCE bypasses the weekend guard)
 .venv313/bin/python scripts/morning_brief.py
 tail -f data_cache/logs/india.log
+
+# Read-only daily watchlist (no keys, no orders)
+.venv313/bin/python scripts/sma_scanner.py --universe nifty50 --fast 6 --slow 30 --max-age 10
 ```
 Brokers per leg are set in `.env` (`INDIA_BROKER=paper|kite|angelone`, `US_BROKER=paper|alpaca`). Everything is paper until
 `ALPHA_FORGE_LIVE=1` is also set. The Mac must be awake at run time; see the header of `scripts/install_launchd.sh`.

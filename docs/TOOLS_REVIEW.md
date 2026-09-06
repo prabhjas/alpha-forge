@@ -45,3 +45,28 @@ Every one of these five is a real, respectable open-source project. The Instagra
 2. **Kronos** stays in `vendor/` as a research toy with a documented negative result. Negative results are worth money: they stop you deploying capital on a demo.
 3. **NautilusTrader** is bookmarked for a future Interactive Brokers move; our current broker set has no adapter for it.
 4. **Freqtrade and Hummingbot** are ruled out on tax grounds alone, before even asking whether the strategies work.
+
+---
+
+# Round 2 — 6 September 2026 (BullGPT, Sensibull, algo-trading links, SMA scanner)
+
+| Tool / link | What it actually is | Verdict |
+|---|---|---|
+| **BullGPT** (bullgpt.io) | AI that reads a chart *screenshot* and writes technical analysis (support/resistance, RSI, entry/SL/TP). $40/mo or $180 lifetime. Operator: Veutino LLC. No broker connection, no automation. | **Skip.** It generates opinions from a picture, not a tested edge. Its own site says "be wary of any tool that claims" guaranteed profits — correct. No free tier, no refund. We already generate signals from data we control; a screenshot-reader adds nothing and can't be backtested. |
+| **Sensibull** (sensibull.com) | Legit SEBI-registered options analytics platform. Strategy builder, option chain, Greeks, draft P&L. **Manual execution only** — it will not auto-trade. ₹800/mo (Zerodha) to ₹1,300/mo. | **Bookmark for Phase 4.** Genuinely the best retail options-analysis tool in India and worth the money *when we trade options* (i.e. when the book clears ~₹20 lakh). Useless to us now — we hold no options. Do not pay for it yet. |
+| **Groww / Angel One "what is algo trading" articles** | Educational explainers. | Background reading. Nothing to integrate. Confirms what we already built: API + strategy + broker. |
+| **Angel One SmartAPI** (smartapi.angelone.in) | Free broker API. | **Already integrated** — `alpha_forge/brokers/angelone_broker.py` (dry-run). Reviewed round 1. |
+| **Kite Connect** (developers.kite.trade, kite.trade/docs) | Zerodha's API. | **Already integrated** — `alpha_forge/brokers/kite_broker.py` (dry-run). The login URL in your screenshot is the normal OAuth step; the api_key in the URL is fine, the api_secret is NOT and must never be shared. |
+| **YouTube tutorial + SMA scanner screenshot** (nifty100_sma_scanner.py) | Build a script that scans Nifty 100 for SMA 6/30 crossovers and ranks by recency. | **Built as `scripts/sma_scanner.py`**, but read-only. See below. |
+
+## The SMA crossover scanner: built, but know what it is
+
+The tutorial's idea (scan for SMA 6/30 crossovers) is a fine *screening* tool and a poor *strategy*. I built the scanner (`scripts/sma_scanner.py`, read-only, no orders, runs Monday with no keys) AND backtested the SMA 6/30 rule as an actual strategy, costs on, 2015–2026:
+
+| Universe | SMA 6/30 CAGR | SMA 6/30 Sharpe | SMA 6/30 MaxDD | Turnover/yr | vs our `trend` (Sharpe) |
+|---|---|---|---|---|---|
+| nifty50 | 8.2% | 0.58 | -35.3% | 40x | trend 0.93 |
+| india_etf | 12.2% | 0.95 | -28.6% | 32x | trend 1.15, MaxDD -11.8% |
+| us_core | 17.4% | 1.06 | -28.8% | 39x | trend 1.32, MaxDD -17.6% |
+
+SMA 6/30 churns 30–40x a year (ours: 5–10x), has ~2x the drawdown, lower Sharpe everywhere, and on Nifty 50 it underperforms buy-and-hold after costs. The fast 6-day average whipsaws in sideways markets — a documented failure mode. **Conclusion:** keep the scanner as a daily watchlist to eyeball what's moving, but the trades still go through the validated `trend` engine + risk manager. The scanner informs; it does not decide.
