@@ -22,9 +22,10 @@ if [ "$LEG" = "india" ]; then
   echo "=== $STAMP india A/B trend_hrp/nifty50 (paper only)" >> "$LOG/$LEG.log"
   "$PY" scripts/run_daily.py --strategy trend_hrp --universe nifty50 --broker paper --account india_ab_hrp --cash 50000 >> "$LOG/$LEG.log" 2>&1
   "$PY" scripts/run_daily.py --strategy trend --universe nifty50 --broker paper --account india_ab_trend --cash 50000 >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy ensemble --universe india_etf --broker paper --account india_ensemble --cash 50000 >> "$LOG/$LEG.log" 2>&1
 else
   BROKER="${US_BROKER:-paper}"
-  echo "=== $STAMP us trend/us_core via $BROKER" >> "$LOG/$LEG.log"
-  "$PY" scripts/run_daily.py --strategy trend --universe us_core --broker "$BROKER" --account us_paper --cash 570 --fractional >> "$LOG/$LEG.log" 2>&1
+  echo "=== $STAMP us ensemble/us_core via $BROKER" >> "$LOG/$LEG.log"
+  "$PY" scripts/run_daily.py --strategy ensemble --universe us_core --broker "$BROKER" --account us_paper --cash 570 --fractional >> "$LOG/$LEG.log" 2>&1
 fi
 echo "=== $STAMP done rc=$?" >> "$LOG/$LEG.log"

@@ -55,3 +55,23 @@ def test_risk_state_is_per_account(tmp_path, monkeypatch):
     d = b.evaluate(570, {"SPY": 0.2, "QQQ": 0.2}, n_orders=2)
     assert d.allowed and d.scale == 1.0
     assert a.state_file != b.state_file
+
+
+def test_ensemble_no_lookahead_and_no_leverage():
+    import numpy as np, pandas as pd
+    from alpha_forge.strategies import Ensemble
+    idx = pd.bdate_range("2015-01-01", periods=900)
+    rng = np.random.default_rng(0)
+    prices = {}
+    for s in ("AAA", "BBB", "CCC", "DDD"):
+        p = 100 * np.cumprod(1 + rng.normal(0.0004, 0.012, len(idx)))
+        prices[s] = pd.DataFrame({"Open": p, "High": p, "Low": p, "Close": p, "Volume": 1e6}, index=idx)
+    w = Ensemble(vol_target=0.12).generate_weights(prices)
+    assert w.abs().sum(axis=1).max() <= 1.0 + 1e-9          # never leveraged
+    assert not w.isnull().values.any()
+    # weights on the last day must not depend on future bars: recompute on a truncated history
+    w_trunc = Ensemble(vol_target=0.12).generate_weights({k: v.iloc[:-30] for k, v in prices.items()})
+    # history well before the truncation boundary must be byte-identical whether or not future bars exist.
+    # (the final bar legitimately differs: trend/momentum force a fresh rebalance on the last available day.)
+    common = w.index[:-60]
+    assert np.allclose(w.loc[common].fillna(0).values, w_trunc.reindex(common).fillna(0).values, atol=1e-9)

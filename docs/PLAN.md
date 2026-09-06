@@ -91,6 +91,7 @@ Every phase has a gate. We do not move until the gate is passed. This is what se
 2. ✅ Parameter robustness: plateau heat maps in `docs/WALK_FORWARD.md`. Trend parameters are stable across halves of history (rank corr 0.57 to 0.58 on stocks); momentum parameters are noise but every set works, which is fine.
 2b. ✅ skfolio sizing tested (`docs/SKFOLIO_SIZING.md`): inverse-vol stays default; risk parity to be A/B tested on the Nifty 50 leg in paper.
 2c. ✅ Pairs / stat-arb tested (`docs/PAIRS.md`): tiny gross edge, destroyed by retail costs. Retired.
+2e. ✅ System hardened to 'best' spec (`docs/SYSTEM.md`): ensemble (trend 60% + momentum 40%) with 12% volatility targeting, plus bootstrap confidence intervals on every metric. Result: ensemble+vol-target is the US book (Sharpe 1.36, MaxDD -14%, was -18%); trend-only stays the India ETF book (too few ETFs to diversify). Robustness: US book P(losing year) 9%, bad-luck MaxDD -25%.
 2d. ✅ Daily automation installed (launchd: India 16:00 IST Mon-Fri, US 03:00 IST Tue-Sat, morning brief 08:30 IST). Paper books running: india_paper (trend/ETF), us_paper (trend/US), india_ab_trend vs india_ab_hrp (Nifty 50 A/B).
 3. Cost sensitivity: double the slippage assumption. If the edge disappears, it was never there.
 4. Regime slices: 2018 (sideways), 2020 (crash), 2022 (rate shock), 2024-26. Know what each strategy does in each.
