@@ -36,4 +36,5 @@ cal_weekdays() { local h=$1 m=$2; local out=""; for d in "$@[3,-1]"; do out+="<d
 write_plist com.alphaforge.india "<string>/bin/zsh</string><string>$ROOT/scripts/daily.sh</string><string>india</string>" "$(cal_weekdays 16 0 1 2 3 4 5)"
 write_plist com.alphaforge.us    "<string>/bin/zsh</string><string>$ROOT/scripts/daily.sh</string><string>us</string>"    "$(cal_weekdays 3 0 2 3 4 5 6)"
 write_plist com.alphaforge.brief "<string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/morning_brief.py</string>" "<dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>30</integer></dict>"
+write_plist com.alphaforge.weekly "<string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/weekly_report.py</string>" "<dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>"
 echo; launchctl list | grep alphaforge
