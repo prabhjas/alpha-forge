@@ -7,3 +7,4 @@ reports/
 KILL_SWITCH
 .pytest_cache/
 vendor/
+dashboard.html
