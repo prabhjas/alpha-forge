@@ -82,6 +82,8 @@ Our edge is slow: trends measured in weeks and months. Options bleed value daily
 
 We are NOT limited to Nifty/BankNifty/Sensex. `scripts/sector_analysis.py` scans every liquid F&O stock across 10 sectors, ranks sectors by strength, ranks stocks within them, and flags real uptrends (`docs/SECTOR_ANALYSIS.md`). The engine already holds Nifty 50 names across all sectors in the CASH market; this report tilts allocation toward strong sectors. Single-stock F&O options remain Phase 4 (lot-size + capital + decay), expressed until then by buying the stock.
 
+**Sector-tilt shipped (7 Sep 2026):** `SectorTilt` ranks sectors by strength and holds only uptrending stocks in the strongest ones. Validated out-of-sample: beats Nifty by 3.7 pts/yr with HALF the drawdown (-20.6% vs -38.4%). Folded into a 3-way `sector_ensemble` (trend 45% / momentum 25% / sector-tilt 30%) — best risk-adjusted Nifty 50 book (Calmar 0.68). Now the primary Nifty 50 paper book (`india_sector`).
+
 ## 3. Phases, gates and kill criteria
 
 Every phase has a gate. We do not move until the gate is passed. This is what separates an engine from a gamble.
