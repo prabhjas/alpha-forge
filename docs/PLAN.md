@@ -78,6 +78,10 @@ Our edge is slow: trends measured in weeks and months. Options bleed value daily
 
 **US leg, leverage without expiry:** leveraged ETFs (SSO 2x S&P, TQQQ 3x Nasdaq) give options-like exposure with no expiry and no theta, only volatility drag. Trend-filtered leveraged ETF is a well-known retail-feasible strategy. Added to Phase 1 as a test item: `trend` on QQQ with a capped TQQQ sleeve, judged by drawdown, not CAGR. Nothing changes until it passes walk-forward.
 
+## 2f. Multi-sector coverage (COO directive, 7 Sep 2026)
+
+We are NOT limited to Nifty/BankNifty/Sensex. `scripts/sector_analysis.py` scans every liquid F&O stock across 10 sectors, ranks sectors by strength, ranks stocks within them, and flags real uptrends (`docs/SECTOR_ANALYSIS.md`). The engine already holds Nifty 50 names across all sectors in the CASH market; this report tilts allocation toward strong sectors. Single-stock F&O options remain Phase 4 (lot-size + capital + decay), expressed until then by buying the stock.
+
 ## 3. Phases, gates and kill criteria
 
 Every phase has a gate. We do not move until the gate is passed. This is what separates an engine from a gamble.
