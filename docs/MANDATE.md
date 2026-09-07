@@ -36,6 +36,15 @@ Wealth = your capital × time × (1 + return)^years, fed by monthly contribution
 
 20% max per position · no leverage (pre-Phase 4) · stop trading a book at -3% day · halve size at -10% drawdown · flat + review at -15% · `KILL_SWITCH` file halts everything.
 
+## 5b. Pre-live safety findings (AngelOne connected 7 Sep 2026)
+
+The live read of the AngelOne account revealed two things that MUST be handled before real orders:
+
+1. **Existing holdings present** (EIHOTEL, IOC, CESC, HUDCO, SUZLON, etc.). The rebalancer currently treats every holding as part of its book, so live it could try to SELL your existing shares to fund targets. **Fix before live: sleeve isolation** — the algo tracks and trades only the positions IT opened (via order tags + a local ledger), and never touches your pre-existing holdings.
+2. **Available cash ₹21.** The account has almost no free cash. A real pilot needs funds added, ring-fenced as the algo's sleeve.
+
+Until sleeve isolation ships and is tested, the India book stays on the PAPER broker even after keys are in. AngelOne is used for live DATA only, not live orders.
+
 ## 6. Reporting
 
 * **Daily**: automated morning brief (08:30 IST).

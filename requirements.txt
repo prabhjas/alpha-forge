@@ -10,5 +10,6 @@ pytest
 alpaca-py
 kiteconnect
 skfolio>=1.0 ; python_version >= '3.10'
-# smartapi-python  # Angel One - install only when you set up that broker
-# pyotp
+smartapi-python  # Angel One
+pyotp
+websocket-client
