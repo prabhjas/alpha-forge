@@ -13,3 +13,4 @@ skfolio>=1.0 ; python_version >= '3.10'
 smartapi-python  # Angel One
 pyotp
 websocket-client
+feedparser  # news digest
