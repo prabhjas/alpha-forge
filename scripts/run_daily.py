@@ -29,6 +29,8 @@ def main():
     ap.add_argument("--cash", type=float, default=50_000, help="paper starting cash")
     ap.add_argument("--fractional", action="store_true", help="allow fractional shares (US/Alpaca)")
     ap.add_argument("--live", action="store_true", help="REAL MONEY. Also needs ALPHA_FORGE_LIVE=1")
+    ap.add_argument("--sleeve-allocation", type=float, default=None,
+                    help="ring-fence this capital; algo manages only what it buys, never your existing holdings")
     a = ap.parse_args()
 
     try:
@@ -40,6 +42,9 @@ def main():
         broker = get_broker("paper", account=a.account, starting_cash=a.cash)
     else:
         broker = get_broker(a.broker, live=a.live)
+    if a.sleeve_allocation is not None:
+        from alpha_forge.brokers import SleeveBroker
+        broker = SleeveBroker(broker, account=a.account, allocation=a.sleeve_allocation)
 
     report = run_daily(a.strategy, a.universe, broker, fractional=a.fractional)
     print(json.dumps({k: v for k, v in report.items() if k != "risk"}, indent=2, default=str))

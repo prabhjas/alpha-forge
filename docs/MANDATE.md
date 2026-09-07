@@ -40,10 +40,10 @@ Wealth = your capital × time × (1 + return)^years, fed by monthly contribution
 
 The live read of the AngelOne account revealed two things that MUST be handled before real orders:
 
-1. **Existing holdings present** (EIHOTEL, IOC, CESC, HUDCO, SUZLON, etc.). The rebalancer currently treats every holding as part of its book, so live it could try to SELL your existing shares to fund targets. **Fix before live: sleeve isolation** — the algo tracks and trades only the positions IT opened (via order tags + a local ledger), and never touches your pre-existing holdings.
+1. **Existing holdings present** (EIHOTEL, IOC, CESC, HUDCO, SUZLON, etc.). ✅ SOLVED — `SleeveBroker` (alpha_forge/brokers/sleeve.py) wraps the live broker so the algo sees and trades ONLY the positions it opened, tracked in a local ledger. It physically refuses to sell any symbol the sleeve doesn't own, so your pre-existing shares can never be touched. Enable per run with `--sleeve-allocation <amount>`. Safety-tested.
 2. **Available cash ₹21.** The account has almost no free cash. A real pilot needs funds added, ring-fenced as the algo's sleeve.
 
-Until sleeve isolation ships and is tested, the India book stays on the PAPER broker even after keys are in. AngelOne is used for live DATA only, not live orders.
+Live India orders will run as `--broker angelone --sleeve-allocation <ring-fenced amount>`, so only algo capital is ever at risk. Still gated behind the 8-week paper proof + ALPHA_FORGE_LIVE=1.
 
 ## 6. Reporting
 

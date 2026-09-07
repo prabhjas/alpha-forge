@@ -75,3 +75,38 @@ def test_ensemble_no_lookahead_and_no_leverage():
     # (the final bar legitimately differs: trend/momentum force a fresh rebalance on the last available day.)
     common = w.index[:-60]
     assert np.allclose(w.loc[common].fillna(0).values, w_trunc.reindex(common).fillna(0).values, atol=1e-9)
+
+
+def test_sleeve_hides_preexisting_and_blocks_their_sale(tmp_path, monkeypatch):
+    from alpha_forge.brokers import sleeve as sl
+    from alpha_forge.brokers.paper import PaperBroker
+    from alpha_forge.brokers.base import Order
+    import alpha_forge.brokers.paper as paper_mod
+    monkeypatch.setattr(sl, "ROOT", tmp_path)
+    monkeypatch.setattr(paper_mod, "ROOT", tmp_path)
+    # underlying account ALREADY holds 100 EIHOTEL the user bought themselves
+    under = PaperBroker(account="real", starting_cash=100000.0)
+    under.set_prices({"EIHOTEL.NS": 187.0, "NIFTYBEES.NS": 270.0})
+    under.place(Order("EIHOTEL.NS", 100, "BUY"))
+    # sleeve wraps it with a ring-fenced Rs 50k
+    s = sl.SleeveBroker(under, account="algo", allocation=50000.0)
+    # the strategy must NOT see the user's 100 EIHOTEL
+    assert s.positions() == {}
+    assert s.cash() == 50000.0
+    # sleeve refuses to sell a symbol it never bought (protects the user's shares)
+    try:
+        s.place(Order("EIHOTEL.NS", 100, "SELL"))
+        assert False, "sleeve should refuse to sell holdings it doesn't own"
+    except ValueError:
+        pass
+    # user's shares are untouched in the underlying
+    assert abs(under.positions()["EIHOTEL.NS"].qty - 100) < 1e-9
+    # algo buys its own NIFTYBEES; now it's in the sleeve and sellable
+    s.place(Order("NIFTYBEES.NS", 10, "BUY"))
+    assert abs(s.positions()["NIFTYBEES.NS"].qty - 10) < 1e-9
+    s.place(Order("NIFTYBEES.NS", 4, "SELL"))
+    assert abs(s.positions()["NIFTYBEES.NS"].qty - 6) < 1e-9
+    # a SELL larger than sleeve holdings is capped, never oversells into user shares
+    s.place(Order("NIFTYBEES.NS", 999, "SELL"))
+    assert "NIFTYBEES.NS" not in s.positions()
+    assert abs(under.positions()["EIHOTEL.NS"].qty - 100) < 1e-9
