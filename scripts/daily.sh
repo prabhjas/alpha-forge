@@ -18,12 +18,12 @@ if [ "$LEG" = "us" ] && { [ "$DOW" -eq 7 ] || [ "$DOW" -eq 1 ]; }; then echo "no
 if [ "$LEG" = "india" ]; then
   BROKER="${INDIA_BROKER:-paper}"
   echo "=== $STAMP india trend/india_etf via $BROKER" >> "$LOG/$LEG.log"
-  "$PY" scripts/run_daily.py --strategy trend --universe india_etf --broker "$BROKER" --account india_paper --cash 50000 >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy trend --universe india_etf --broker "$BROKER" --account india_paper --cash 50000 --live-close >> "$LOG/$LEG.log" 2>&1
   echo "=== $STAMP india A/B trend_hrp/nifty50 (paper only)" >> "$LOG/$LEG.log"
-  "$PY" scripts/run_daily.py --strategy trend_hrp --universe nifty50 --broker paper --account india_ab_hrp --cash 50000 >> "$LOG/$LEG.log" 2>&1
-  "$PY" scripts/run_daily.py --strategy trend --universe nifty50 --broker paper --account india_ab_trend --cash 50000 >> "$LOG/$LEG.log" 2>&1
-  "$PY" scripts/run_daily.py --strategy ensemble --universe india_etf --broker paper --account india_ensemble --cash 50000 >> "$LOG/$LEG.log" 2>&1
-  "$PY" scripts/run_daily.py --strategy sector_ensemble --universe nifty50 --broker paper --account india_sector --cash 50000 >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy trend_hrp --universe nifty50 --broker paper --account india_ab_hrp --cash 50000 --live-close >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy trend --universe nifty50 --broker paper --account india_ab_trend --cash 50000 --live-close >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy ensemble --universe india_etf --broker paper --account india_ensemble --cash 50000 --live-close >> "$LOG/$LEG.log" 2>&1
+  "$PY" scripts/run_daily.py --strategy sector_ensemble --universe nifty50 --broker paper --account india_sector --cash 50000 --live-close >> "$LOG/$LEG.log" 2>&1
 else
   BROKER="${US_BROKER:-paper}"
   echo "=== $STAMP us ensemble/us_core via $BROKER" >> "$LOG/$LEG.log"

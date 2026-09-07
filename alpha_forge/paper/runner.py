@@ -45,10 +45,18 @@ def rebalance_to_targets(broker: Broker, targets: Dict[str, float], prices: Dict
 
 
 def run_daily(strategy_name: str, universe: str, broker: Broker, params: Dict = None,
-              fractional: bool = False, start: str = "2018-01-01") -> Dict:
+              fractional: bool = False, start: str = "2018-01-01", live_close: bool = False) -> Dict:
     strat = REGISTRY[strategy_name](**(params or {}))
     tickers = UNIVERSES[universe]
     prices = load_prices(tickers, start=start, use_cache=False)
+    live_close_note = "off"
+    if live_close:
+        try:
+            from alpha_forge.data.live_feed import angelone_ltps, append_today_close
+            n = append_today_close(prices, angelone_ltps(tickers))
+            live_close_note = f"appended {n} live closes from AngelOne"
+        except Exception as e:
+            live_close_note = f"live-close failed ({type(e).__name__}); used Yahoo"
     closes = close_matrix(prices)
     weights = strat.generate_weights(prices)
     today_w = weights.iloc[-1]
@@ -66,6 +74,7 @@ def run_daily(strategy_name: str, universe: str, broker: Broker, params: Dict = 
         "strategy": strat.describe(),
         "universe": universe,
         "broker": broker.name,
+        "live_close": live_close_note,
         "equity_before": round(broker.equity(), 2),
         "targets": {k: round(v, 4) for k, v in targets.items()},
         "orders": [o.__dict__ for o in orders],

@@ -31,6 +31,7 @@ def main():
     ap.add_argument("--live", action="store_true", help="REAL MONEY. Also needs ALPHA_FORGE_LIVE=1")
     ap.add_argument("--sleeve-allocation", type=float, default=None,
                     help="ring-fence this capital; algo manages only what it buys, never your existing holdings")
+    ap.add_argument("--live-close", action="store_true", help="append today's AngelOne close (fixes Yahoo EOD lag)")
     a = ap.parse_args()
 
     try:
@@ -46,7 +47,7 @@ def main():
         from alpha_forge.brokers import SleeveBroker
         broker = SleeveBroker(broker, account=a.account, allocation=a.sleeve_allocation)
 
-    report = run_daily(a.strategy, a.universe, broker, fractional=a.fractional)
+    report = run_daily(a.strategy, a.universe, broker, fractional=a.fractional, live_close=a.live_close)
     print(json.dumps({k: v for k, v in report.items() if k != "risk"}, indent=2, default=str))
     print("equity after:", round(broker.equity(), 2))
 
