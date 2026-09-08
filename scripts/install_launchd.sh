@@ -39,4 +39,24 @@ write_plist com.alphaforge.brief "<string>$ROOT/.venv313/bin/python</string><str
 write_plist com.alphaforge.weekly "<string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/weekly_report.py</string>" "<dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>"
 write_plist com.alphaforge.news "<string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/news_digest.py</string>" "<dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>15</integer></dict>"
 write_plist com.alphaforge.dashboard "<string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/dashboard.py</string>" "<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>"
+
+# catch-up: runs at login/wake and every 30 min; each job fires at most once/day if missed
+cat > "$AGENTS/com.alphaforge.catchup.plist" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.alphaforge.catchup</string>
+  <key>ProgramArguments</key><array><string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/catch_up.py</string></array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>StandardOutPath</key><string>$ROOT/data_cache/logs/launchd_catchup.out</string>
+  <key>StandardErrorPath</key><string>$ROOT/data_cache/logs/launchd_catchup.err</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string></dict>
+</dict></plist>
+PL
+launchctl bootout "gui/$UID_/com.alphaforge.catchup" 2>/dev/null || true
+launchctl bootstrap "gui/$UID_" "$AGENTS/com.alphaforge.catchup.plist"
+echo "installed com.alphaforge.catchup"
+
 echo; launchctl list | grep alphaforge
