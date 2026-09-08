@@ -59,4 +59,24 @@ launchctl bootout "gui/$UID_/com.alphaforge.catchup" 2>/dev/null || true
 launchctl bootstrap "gui/$UID_" "$AGENTS/com.alphaforge.catchup.plist"
 echo "installed com.alphaforge.catchup"
 
+
+# live dashboard server: always-on (KeepAlive), open http://localhost:8787
+cat > "$AGENTS/com.alphaforge.live.plist" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.alphaforge.live</string>
+  <key>ProgramArguments</key><array><string>$ROOT/.venv313/bin/python</string><string>$ROOT/scripts/live_server.py</string></array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>$ROOT/data_cache/logs/live_server.log</string>
+  <key>StandardErrorPath</key><string>$ROOT/data_cache/logs/live_server.err</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string></dict>
+</dict></plist>
+PL
+launchctl bootout "gui/$UID_/com.alphaforge.live" 2>/dev/null || true
+launchctl bootstrap "gui/$UID_" "$AGENTS/com.alphaforge.live.plist"
+echo "installed com.alphaforge.live"
+
 echo; launchctl list | grep alphaforge
