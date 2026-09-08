@@ -27,6 +27,29 @@ LABEL={"india_sector":"Sector engine (Nifty 50)","india_paper":"Trend (ETFs)","i
        "india_ab_trend":"A/B trend (Nifty 50)","india_ab_hrp":"A/B risk-parity (Nifty 50)","us_paper":"Ensemble (US)"}
 
 _broker=None; _lock=threading.Lock(); _price_cache={"t":0,"px":{}}
+_flag_cache={"t":0,"flags":{}}
+
+def daily_flags(symbols):
+    """mom3 + trend flag per symbol, from daily closes. Cached 10 min (slow to compute)."""
+    symbols=list(symbols)
+    now=time.time()
+    if now-_flag_cache["t"]<600 and all(s in _flag_cache["flags"] for s in symbols):
+        return dict(_flag_cache["flags"])
+    out=dict(_flag_cache["flags"])
+    try:
+        c=close_matrix(load_prices(symbols, start="2023-06-01"))
+        for s in symbols:
+            px=c[s].dropna() if s in c else None
+            if px is None or len(px)<200:
+                out[s]={"mom3":0.0,"flag":"ok"}; continue
+            mom3=float(px.iloc[-1]/px.iloc[-63]-1)*100
+            up=bool(px.iloc[-1]>px.rolling(200).mean().iloc[-1])
+            flag="exiting" if not up else ("shaky" if mom3<0 else "ok")
+            out[s]={"mom3":round(mom3,1),"flag":flag}
+        _flag_cache["t"]=now; _flag_cache["flags"]=out
+    except Exception:
+        pass
+    return out
 
 def broker():
     global _broker
@@ -86,14 +109,18 @@ def payload():
     # sector-tilt live holdings
     cash,pos=book_pos.get("india_sector",(0,{}))
     mvt=sum(v["qty"]*(lp.get(s) or prev.get(s,v["avg_price"])) for s,v in pos.items()) or 1
+    flags=daily_flags(list(pos))
     holds=[]
     for s,v in pos.items():
         px=lp.get(s) or prev.get(s,v["avg_price"]); pc=prev.get(s,px)
+        f=flags.get(s,{"mom3":0.0,"flag":"ok"})
         holds.append({"stock":s.replace(".NS",""),"px":round(px,1),"day":round((px/pc-1)*100,2),
-                      "wt":round(v["qty"]*px/mvt*100,1),"live":s in lp})
+                      "wt":round(v["qty"]*px/mvt*100,1),"live":s in lp,"mom3":f["mom3"],"flag":f["flag"]})
     holds.sort(key=lambda h:-h["wt"])
+    shaky=[h["stock"] for h in holds if h["flag"]=="shaky"]
+    exiting=[h["stock"] for h in holds if h["flag"]=="exiting"]
     return {"ts":datetime.now().strftime("%H:%M:%S"),"date":datetime.now().strftime("%a %d %b %Y"),
-            "pulse":pulse,"books":books,"holds":holds,
+            "pulse":pulse,"books":books,"holds":holds,"shaky":shaky,"exiting":exiting,
             "market_open": _mkt_open()}
 
 def _mkt_open():
@@ -119,6 +146,10 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
 th{text-align:left;color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid var(--line)}
 td{padding:8px;border-bottom:1px solid var(--line)}td.n{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
 h2{font-size:13px;color:var(--soft);margin:22px 0 4px}.dim{opacity:.55}
+.chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.chip.ok{background:#132a1e;color:var(--up)}.chip.shaky{background:#2a2213;color:#d8a445}.chip.exiting{background:#2c1a1a;color:var(--down)}
+.banner{background:#2a2213;border:1px solid #4a3c1a;color:#e6c675;border-radius:10px;padding:10px 14px;font-size:13px;margin:14px 0}
+.banner b{color:#f0d78a}.banner.hide{display:none}
 </style></head><body><div class="wrap">
 <div class="top"><div><h1>Alpha Forge · Live</h1><div class="sub" id="date"></div></div>
 <div class="live" id="livebadge"><span class="blink"></span><span id="livetext">LIVE</span> · <span id="clock" class="mono"></span></div></div>
@@ -126,9 +157,11 @@ h2{font-size:13px;color:var(--soft);margin:22px 0 4px}.dim{opacity:.55}
 <div><div class="sub">Nifty pulse (NIFTYBEES)</div><div class="pulse mono" id="pulse">—</div></div>
 <div><div class="sub">Today</div><div class="mono" id="pchg" style="font-size:20px">—</div></div>
 <div class="sub" id="note" style="max-width:360px"></div></div>
+<div class="banner hide" id="shakybar"></div>
 <h2>Paper books — equity at live prices</h2><div class="grid" id="books"></div>
 <h2>Sector engine — live holdings</h2>
-<div style="overflow-x:auto"><table><thead><tr><th>Stock</th><th class="n">Weight</th><th class="n">Price</th><th class="n">Today</th></tr></thead><tbody id="holds"></tbody></table></div>
+<div style="overflow-x:auto"><table><thead><tr><th>Stock</th><th class="n">Weight</th><th class="n">Price</th><th class="n">Today</th><th class="n">3-mo</th><th>Signal</th></tr></thead><tbody id="holds"></tbody></table></div>
+<div class="sub" style="margin-top:6px">Signal: <b>ok</b> healthy · <b>shaky</b> trend up but momentum turned down (watch) · <b>exiting</b> trend broke, sells next rebalance.</div>
 <div class="sub" style="margin-top:20px">Paper only · figures simulated · India live via AngelOne, US shows last close · refreshes every 15s</div>
 </div><script>
 const $=i=>document.getElementById(i);
@@ -143,7 +176,12 @@ async function tick(){try{const r=await fetch('/api/data',{cache:'no-store'});co
   <div class="e mono">${b.ccy}${b.equity.toLocaleString('en-IN')}</div>
   <div class="m"><span class="${cl(b.pnl_pct)}">${sg(b.pnl_pct)}</span><span>${b.positions} pos${b.live?'':' · EOD'}</span></div></div>`).join('');
  $('holds').innerHTML=d.holds.map(h=>`<tr><td>${h.stock}${h.live?'':' <span class=sub>EOD</span>'}</td>
-  <td class="n">${h.wt}%</td><td class="n">₹${h.px}</td><td class="n ${cl(h.day)}">${sg(h.day)}</td></tr>`).join('');
+  <td class="n">${h.wt}%</td><td class="n">₹${h.px}</td><td class="n ${cl(h.day)}">${sg(h.day)}</td>
+  <td class="n ${cl(h.mom3)}">${sg(h.mom3)}</td><td><span class="chip ${h.flag}">${h.flag}</span></td></tr>`).join('');
+ const sb=$('shakybar');
+ if((d.shaky&&d.shaky.length)||(d.exiting&&d.exiting.length)){sb.classList.remove('hide');
+   sb.innerHTML=(d.shaky.length?`⚠ <b>Shaky (watch):</b> ${d.shaky.join(', ')}. `:'')+(d.exiting.length?`✖ <b>Exiting:</b> ${d.exiting.join(', ')} (sells next rebalance).`:'');
+ }else sb.classList.add('hide');
 }catch(e){$('livetext').textContent='reconnecting…';}}
 tick();setInterval(tick,15000);
 </script></body></html>"""
