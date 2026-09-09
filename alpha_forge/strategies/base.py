@@ -31,3 +31,9 @@ class Strategy(ABC):
 
     def describe(self) -> str:
         return f"{self.name}({', '.join(f'{k}={v}' for k, v in self.params.items())})"
+
+    def effective_rebalance(self) -> str:
+        """How often this strategy actually changes its book: 'D', 'W', or 'M'.
+        The live runner uses this to trade only on real rebalance days, so live
+        turnover matches the backtest instead of churning every day."""
+        return self.params.get("rebalance", "W")

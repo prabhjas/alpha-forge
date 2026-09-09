@@ -40,6 +40,17 @@ class Ensemble(Strategy):
         from alpha_forge.strategies import REGISTRY
         return REGISTRY[name](**params)
 
+    def effective_rebalance(self) -> str:
+        # finest cadence among components (e.g. weekly trend -> the blend can change weekly)
+        order = {"D": 0, "W": 1, "M": 2}
+        cads = []
+        for name, params, _ in self.params["components"]:
+            try:
+                cads.append(self._build(name, params).effective_rebalance())
+            except Exception:
+                cads.append("M")
+        return min(cads, key=lambda c: order.get(c, 1)) if cads else "W"
+
     def generate_weights(self, prices: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         p = self.params
         closes = close_matrix(prices)

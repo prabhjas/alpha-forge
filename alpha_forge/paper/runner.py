@@ -65,7 +65,27 @@ def run_daily(strategy_name: str, universe: str, broker: Broker, params: Dict = 
     if hasattr(broker, "set_prices"):
         broker.set_prices(last_px)  # paper broker fills at last close
     risk = RiskManager(account=getattr(broker, 'account', broker.name))
-    orders = rebalance_to_targets(broker, targets, last_px, risk, fractional, tag=strategy_name)
+    # --- rebalance cadence gate: only trade on real rebalance days, so live turnover
+    #     matches the backtest instead of churning every day (whipsaw). ---
+    acct = getattr(broker, 'account', broker.name)
+    freq = strat.effective_rebalance()
+    cadence_days = {"D": 0, "W": 6, "M": 25}.get(freq, 6)
+    reb_state_file = LOG_DIR.parent / "rebalance_state.json"
+    reb_state = json.loads(reb_state_file.read_text()) if reb_state_file.exists() else {}
+    today = datetime.now().date()
+    last_str = reb_state.get(acct)
+    last_date = datetime.fromisoformat(last_str).date() if last_str else None
+    elapsed = (today - last_date).days if last_date else 10_000
+    is_reb_day = elapsed >= cadence_days
+    if is_reb_day:
+        orders = rebalance_to_targets(broker, targets, last_px, risk, fractional, tag=strategy_name)
+        reb_state[acct] = today.isoformat()
+        reb_state_file.parent.mkdir(parents=True, exist_ok=True)
+        reb_state_file.write_text(json.dumps(reb_state, indent=2))
+        reb_note = f"rebalance day ({freq}, {elapsed}d since last)"
+    else:
+        orders = []
+        reb_note = f"HOLD — no rebalance ({freq}, {elapsed}d/{cadence_days}d since last); prevents daily churn"
     fills = broker.place_all(orders) if orders else []
     risk.record_orders(len(fills))
     report = {
@@ -75,6 +95,7 @@ def run_daily(strategy_name: str, universe: str, broker: Broker, params: Dict = 
         "universe": universe,
         "broker": broker.name,
         "live_close": live_close_note,
+        "rebalance": reb_note,
         "equity_before": round(broker.equity(), 2),
         "targets": {k: round(v, 4) for k, v in targets.items()},
         "orders": [o.__dict__ for o in orders],
