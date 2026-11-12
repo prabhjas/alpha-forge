@@ -21,7 +21,7 @@ def account_summary(path: Path) -> dict:
     pos = {s: p for s, p in st["positions"].items() if abs(p["qty"]) > 1e-9}
     mv, cost_basis = 0.0, 0.0
     if pos:
-        px = close_matrix(load_prices(list(pos), start=(date.today() - pd.Timedelta(days=10)).isoformat(), use_cache=False)).ffill().iloc[-1]
+        _cm = close_matrix(load_prices(list(pos), start=(date.today() - pd.Timedelta(days=10)).isoformat(), use_cache=False, allow_stale=True)).ffill(); px = _cm.iloc[-1] if len(_cm) else {}
         for s, p in pos.items():
             mv += p["qty"] * float(px.get(s, p["avg_price"]))
             cost_basis += p["qty"] * p["avg_price"]

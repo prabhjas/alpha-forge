@@ -1,0 +1,215 @@
+<title>Alpha Forge Status & ₹3L Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: single ledger column; verdict first, then evidence, then the plan, then rules. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --ink:#15212b; --muted:#5b6b78; --line:#d9e0e5;
+  --accent:#1f4e79; --accent-soft:#e3ecf5;
+  --good:#1c7a4a; --good-soft:#e1f2e8; --warn:#9a6200; --warn-soft:#fbefd3; --bad:#b3261e; --bad-soft:#fbe4e2;
+  --c1:#1f4e79; --c2:#4a86b8; --c3:#2f8f83; --c4:#a9b6c0;
+  --display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif; --body:"Inter",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10171d; --surface:#18222b; --ink:#e6edf2; --muted:#93a3b0; --line:#2b3944;
+  --accent:#7fb2e0; --accent-soft:#1d3145;
+  --good:#5fc48d; --good-soft:#173326; --warn:#e3b04f; --warn-soft:#3a2e12; --bad:#f08079; --bad-soft:#40201e;
+  --c1:#7fb2e0; --c2:#4a86b8; --c3:#4fb5a8; --c4:#52626e; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#10171d; --surface:#18222b; --ink:#e6edf2; --muted:#93a3b0; --line:#2b3944;
+  --accent:#7fb2e0; --accent-soft:#1d3145;
+  --good:#5fc48d; --good-soft:#173326; --warn:#e3b04f; --warn-soft:#3a2e12; --bad:#f08079; --bad-soft:#40201e;
+  --c1:#7fb2e0; --c2:#4a86b8; --c3:#4fb5a8; --c4:#52626e; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);font-variant-numeric:tabular-nums}
+.wrap{max-width:920px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:34px}
+h1{font:600 30px/1.15 var(--display);margin:0;text-wrap:balance}
+h2{font:600 19px/1.25 var(--display);margin:0;text-wrap:balance}
+h3{font:600 14px/1.3 var(--body);margin:0}
+p{margin:0;max-width:68ch}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--good-soft);color:var(--good)} .wn{background:var(--warn-soft);color:var(--warn)} .no{background:var(--bad-soft);color:var(--bad)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.n{text-align:right;white-space:nowrap}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+tfoot td{font-weight:600;border-top:2px solid var(--line)}
+.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;min-width:0;overflow:hidden;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.note{background:var(--accent-soft);border-radius:6px;padding:12px 16px}
+.note.bad{background:var(--bad-soft)} .note.warn{background:var(--warn-soft)}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+code{font-size:13px;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.two>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+</style>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:8px">
+  <div class="eyebrow">Alpha Forge · status as of 11 Nov 2026 · prices from 9–10 Nov close</div>
+  <h1>Where we stand, and what the engine says to do with ₹3,00,000</h1>
+  <p class="muted">The engine has run on paper for nine weeks. It is alive and safe, but it has not beaten the Indian index, and nothing here can promise a no-loss month. The plan below is built around that.</p>
+</header>
+
+<section>
+  <div class="verdicts">
+    <div class="verdict"><span><span class="pill ok">Running</span></span><h3>Engine is alive, paper only</h3><span class="small muted">Daily India and US runs still fire. No real order has ever been placed. Live switch is off.</span></div>
+    <div class="verdict"><span><span class="pill wn">Not proven</span></span><h3>8-week paper test: mixed</h3><span class="small muted">India books returned −4.9% to +4.1% while Nifty rose +5.3%. US book −0.3% vs S&amp;P −2.4%.</span></div>
+    <div class="verdict"><span><span class="pill no">Not ready</span></span><h3>Calls and puts</h3><span class="small muted">Our own tests lost money, a Nifty lot is 11× too big to hedge this book, and US options are not open to you via INDmoney.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>What is running on your Mac right now</h2>
+  <div class="tw"><table>
+    <tr><th>Job</th><th>When (IST)</th><th>State</th><th>Detail</th></tr>
+    <tr><td>India daily run (5 paper books)</td><td>Mon–Fri 16:00</td><td><span class="pill ok">OK</span></td><td>Last run 10 Nov, live closes from AngelOne</td></tr>
+    <tr><td>US daily run (1 paper book)</td><td>Tue–Sat 03:00</td><td><span class="pill ok">OK</span></td><td>Last run 11 Nov</td></tr>
+    <tr><td>Live dashboard server</td><td>Always on</td><td><span class="pill ok">OK</span></td><td>localhost:8787 responds</td></tr>
+    <tr><td>News digest</td><td>Daily 08:15</td><td><span class="pill ok">OK</span></td><td>Last 11 Nov</td></tr>
+    <tr><td>Missed-run catch-up</td><td>Every 30 min</td><td><span class="pill ok">OK</span></td><td></td></tr>
+    <tr><td>Morning brief</td><td>Daily 08:30</td><td><span class="pill no">Crashing</span></td><td>Price lookup returns empty; needs a fix</td></tr>
+    <tr><td>Evening dashboard snapshot</td><td>Daily 17:00</td><td><span class="pill no">Crashing</span></td><td>Same error; dashboard.html last rebuilt 10 Nov by catch-up</td></tr>
+    <tr><td>Weekly review</td><td>Sun 18:00</td><td><span class="pill no">Crashing</span></td><td>Last good report 1 Nov</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Paper scorecard, 7 Sep → 10 Nov</h2>
+  <div class="tw"><table>
+    <tr><th>Book</th><th>Strategy</th><th class="n">Start</th><th class="n">Now</th><th class="n">Return</th><th class="n">Index</th><th class="n">Gap</th></tr>
+    <tr><td>india_ab_hrp</td><td>Trend + risk parity, Nifty 50</td><td class="n">₹50,000</td><td class="n">₹52,038</td><td class="n pos">+4.1%</td><td class="n">+5.3%</td><td class="n neg">−1.2</td></tr>
+    <tr><td>india_ab_trend</td><td>Trend, Nifty 50</td><td class="n">₹50,000</td><td class="n">₹49,928</td><td class="n neg">−0.1%</td><td class="n">+5.3%</td><td class="n neg">−5.4</td></tr>
+    <tr><td>india_sector</td><td>Sector ensemble, Nifty 50</td><td class="n">₹50,000</td><td class="n">₹49,140</td><td class="n neg">−1.7%</td><td class="n">+5.3%</td><td class="n neg">−7.0</td></tr>
+    <tr><td>india_paper</td><td>Trend, India ETFs</td><td class="n">₹50,000</td><td class="n">₹47,805</td><td class="n neg">−4.4%</td><td class="n">+5.3%</td><td class="n neg">−9.7</td></tr>
+    <tr><td>india_ensemble</td><td>Ensemble, India ETFs</td><td class="n">₹50,000</td><td class="n">₹47,529</td><td class="n neg">−4.9%</td><td class="n">+5.3%</td><td class="n neg">−10.2</td></tr>
+    <tr><td>us_paper</td><td>Ensemble + vol target, US</td><td class="n">$570</td><td class="n">$568</td><td class="n neg">−0.3%</td><td class="n">−2.4%</td><td class="n pos">+2.1</td></tr>
+  </table></div>
+  <p class="small muted">The India books sat 40–78% in cash through a rally and got whipsawed on re-entry. Nine weeks is a short sample, but the mandate's bar for automated live trading was eight clean weeks, and India did not clear it. That is why the plan below is simple, manual, and half index.</p>
+</section>
+
+<section>
+  <h2>Connections</h2>
+  <div class="tw"><table>
+    <tr><th>Broker</th><th>State</th><th>What it means</th></tr>
+    <tr><td>AngelOne (India)</td><td><span class="pill ok">Connected</span></td><td>Keys in <code>.env</code>, live prices flowing. Set to paper; the engine cannot place real orders.</td></tr>
+    <tr><td>Zerodha Kite</td><td><span class="pill no">Not connected</span></td><td>Keys were never filled in.</td></tr>
+    <tr><td>Alpaca (US paper)</td><td><span class="pill no">Not connected</span></td><td>Keys empty. The US book uses simulated fills.</td></tr>
+    <tr><td>INDmoney MCP</td><td><span class="pill wn">Not in this session</span></td><td>No INDmoney, Zerodha or AngelOne connector is attached to this Claude session. Not needed for this plan: you place the orders in the app.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Can we hedge with calls and puts?</h2>
+  <div class="two">
+    <div><h3>India</h3>
+      <ul><li>One Nifty option lot is 65 units ≈ <b>₹16.3 lakh</b> of exposure. Your India allocation is ₹1.5 lakh. A put that size is a bet 11× bigger than what it protects.</li>
+      <li>Our 2019–2026 tests: buying calls averaged −1.8% per trade (median −10.6%). Buying puts lost on 61% of trades (median −17.6%).</li>
+      <li>SEBI's FY26 study: 87.7% of individual F&amp;O traders lost money.</li></ul></div>
+    <div><h3>US</h3>
+      <ul><li>INDmoney offers US stocks and ETFs, not US options, and RBI's remittance rules do not allow margin or derivative trading abroad. Please confirm in the app, but treat this as closed.</li>
+      <li>The hedge that fits this size is cash, diversification and exit rules. That is what the plan uses.</li></ul></div>
+  </div>
+  <div class="note"><b>The ₹20,000 + ₹20,000 options sandbox: skip it for now.</b> If you want to learn options, I can add an options paper book to the engine and we judge it after eight weeks, with no money at risk.</div>
+</section>
+
+<section>
+  <h2>One best stock for one month: the odds</h2>
+  <p>Ten years of monthly history (130 months), using the same ranking the engine uses: in an uptrend, strongest risk-adjusted momentum.</p>
+  <div class="tw"><table>
+    <tr><th>Hold for one month</th><th class="n">Months up</th><th class="n">Typical month</th><th class="n">Lost over 5%</th><th class="n">Worst month</th></tr>
+    <tr><td>India: the single top stock</td><td class="n">59%</td><td class="n">+1.5%</td><td class="n neg">1 in 5</td><td class="n neg">−23%</td></tr>
+    <tr><td>India: top 5 stocks</td><td class="n">62%</td><td class="n">+1.2%</td><td class="n">1 in 9</td><td class="n neg">−21%</td></tr>
+    <tr><td>India: Nifty 50 index</td><td class="n">58%</td><td class="n">+1.2%</td><td class="n">1 in 14</td><td class="n neg">−23%</td></tr>
+    <tr><td>US: the single top name</td><td class="n">56%</td><td class="n">+1.7%</td><td class="n neg">1 in 5</td><td class="n neg">−21%</td></tr>
+    <tr><td>US: top 5 names</td><td class="n">65%</td><td class="n">+2.3%</td><td class="n">1 in 10</td><td class="n neg">−11%</td></tr>
+    <tr><td>US: S&amp;P 500 index</td><td class="n">70%</td><td class="n">+1.8%</td><td class="n">1 in 12</td><td class="n neg">−13%</td></tr>
+  </table></div>
+  <div class="note bad"><b>No stock or basket avoids losing months.</b> A single stock loses more than 5% in one month out of five. Five names cut that roughly in half for almost the same typical gain. If the money truly cannot fall, it belongs in a liquid fund or FD at about 6–7% a year, not in shares. These figures use today's index members and ignore tax, so real results would be a little worse.</div>
+</section>
+
+<section>
+  <h2>The ₹3,00,000 plan</h2>
+  <div class="bar" role="img" aria-label="Allocation: India index 25%, India stocks 25%, US stocks 33%, reserve 17%">
+    <div style="width:25%;background:var(--c1)">25%</div><div style="width:25%;background:var(--c2)">25%</div><div style="width:33.3%;background:var(--c3)">33%</div><div style="width:16.7%;background:var(--c4)">17%</div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--c1)"></i>India index ₹75,000</span><span><i style="background:var(--c2)"></i>India top 5 ₹75,000</span>
+    <span><i style="background:var(--c3)"></i>US top 5 ₹1,00,000</span><span><i style="background:var(--c4)"></i>Reserve ₹50,000</span>
+  </div>
+
+  <h3>India, ₹1,50,000 (AngelOne or Zerodha, delivery)</h3>
+  <div class="tw"><table>
+    <tr><th>Buy</th><th>Why it ranks</th><th class="n">Price</th><th class="n">Qty</th><th class="n">Amount</th></tr>
+    <tr><td>NIFTYBEES (Nifty 50 ETF)</td><td>Core. Index is 4% above its 200-day average</td><td class="n">₹285</td><td class="n">263</td><td class="n">₹74,958</td></tr>
+    <tr><td>Divi's Labs</td><td>6-mo +73%, at 52-week high. Very stretched: smallest position</td><td class="n">₹11,566</td><td class="n">1</td><td class="n">₹11,566</td></tr>
+    <tr><td>Kotak Bank</td><td>3-mo +23%, at 52-week high, low volatility</td><td class="n">₹480</td><td class="n">31</td><td class="n">₹14,865</td></tr>
+    <tr><td>Titan</td><td>1-mo +15%, 3% off high</td><td class="n">₹5,005</td><td class="n">3</td><td class="n">₹15,015</td></tr>
+    <tr><td>ICICI Bank</td><td>6-mo +27%, at 52-week high</td><td class="n">₹1,589</td><td class="n">9</td><td class="n">₹14,301</td></tr>
+    <tr><td>Tech Mahindra</td><td>6-mo +28%, 1% off high</td><td class="n">₹1,805</td><td class="n">8</td><td class="n">₹14,440</td></tr>
+    <tfoot><tr><td colspan="4">India total (about ₹4,900 left for charges)</td><td class="n">₹1,45,145</td></tr></tfoot>
+  </table></div>
+
+  <h3>US, ₹1,00,000 ≈ $1,045 after transfer costs (INDmoney, fractional shares)</h3>
+  <div class="tw"><table>
+    <tr><th>Buy</th><th>Why it ranks</th><th class="n">Price</th><th class="n">Amount</th></tr>
+    <tr><td>XLV (US healthcare ETF)</td><td>6-mo +31%, 19% above 200-day average, low volatility</td><td class="n">$189</td><td class="n">$209</td></tr>
+    <tr><td>Eli Lilly</td><td>6-mo +45%, at 52-week high. Overlaps with XLV</td><td class="n">$1,432</td><td class="n">$209</td></tr>
+    <tr><td>Apple</td><td>3-mo +15%, near high</td><td class="n">$349</td><td class="n">$209</td></tr>
+    <tr><td>Berkshire Hathaway B</td><td>At 52-week high, calmest name on the list</td><td class="n">$583</td><td class="n">$209</td></tr>
+    <tr><td>Microsoft</td><td>6-mo +31%, 21% above 200-day average</td><td class="n">$533</td><td class="n">$209</td></tr>
+    <tfoot><tr><td colspan="3">US total (rate ₹93.95 per $)</td><td class="n">$1,045</td></tr></tfoot>
+  </table></div>
+  <p class="small muted">Deliberately left out: Nvidia (−25% this month), Alphabet, Broadcom, Nasdaq-100 and gold. All are below their 200-day averages. US tech is in a pullback; the engine's rule is to stay out of names in a downtrend.</p>
+
+  <h3>Reserve, ₹50,000</h3>
+  <p>Keep in a liquid fund or sweep FD. It is the cushion, and it is the money you use if a holding is stopped out and a new name qualifies.</p>
+</section>
+
+<section>
+  <h2>What one month could look like on the ₹2.5 lakh invested</h2>
+  <div class="tw"><table>
+    <tr><th>Case</th><th>How often</th><th class="n">Result</th></tr>
+    <tr><td>Typical month</td><td>Middle of the range</td><td class="n pos">+₹3,000 to +₹5,500</td></tr>
+    <tr><td>Bad month</td><td>About 1 in 10</td><td class="n neg">about −₹12,500</td></tr>
+    <tr><td>Worst month in 10 years</td><td>March 2020-type crash</td><td class="n neg">about −₹41,000</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Rules that protect the money</h2>
+  <ul>
+    <li><b>Buy in two steps.</b> Now: all ten stocks and half the NIFTYBEES. On 25 Nov: the other half of NIFTYBEES.</li>
+    <li><b>Per-stock exit.</b> Sell any stock that closes 8% below your buy price, or closes below its 50-day average.</li>
+    <li><b>Whole-plan brake.</b> If the total is down ₹18,000 (6%), sell half of the stock positions and we review.</li>
+    <li><b>Review date: 11 Dec 2026.</b> Re-rank, replace anything that has dropped out of trend, decide whether to continue.</li>
+    <li><b>Tax.</b> Indian shares sold within a year: 20% on gains. US shares sold within 24 months: taxed at your slab rate.</li>
+    <li><b>Check prices before buying.</b> Figures are from the 9–10 Nov close. If a stock has jumped more than 3% since, skip it or ask me to re-rank.</li>
+  </ul>
+  <div class="note warn"><b>Who does what.</b> You place every order yourself. I cannot move money or trade, and I am not a licensed investment adviser: this sheet is your own engine's ranking and rules applied to ₹3 lakh, for you to accept, change or reject.</div>
+</section>
+
+<section>
+  <h2>Where the earlier work lives</h2>
+  <div class="tw"><table>
+    <tr><th>File in <code>alpha-forge/</code></th><th>What it is</th></tr>
+    <tr><td>docs/MANDATE.md</td><td>The charter: targets, risk limits, who decides what</td></tr>
+    <tr><td>docs/PLAN.md</td><td>Master plan and the four phases</td></tr>
+    <tr><td>docs/SYSTEM.md, WALK_FORWARD.md, RESULTS.md</td><td>Backtests and robustness of each strategy</td></tr>
+    <tr><td>docs/OPTIONS_TEST.md, OPTIONS_DEEP.md</td><td>The call/put tests quoted above</td></tr>
+    <tr><td>docs/SECTOR_ANALYSIS.md, RESEARCH_BRIEF.md</td><td>Sector ranking and bull/bear notes per stock (from September)</td></tr>
+    <tr><td>dashboard.html, localhost:8787</td><td>Paper-book dashboard, snapshot and live</td></tr>
+    <tr><td>data_cache/weekly/</td><td>Weekly paper reviews (last good: 1 Nov)</td></tr>
+    <tr><td>docs/status-and-plan.html</td><td>This sheet</td></tr>
+  </table></div>
+</section>
+</div>

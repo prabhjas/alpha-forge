@@ -23,6 +23,49 @@ with open(ROOT / "config" / "universes.yaml") as fh:
     UNIVERSES: Dict[str, List[str]] = yaml.safe_load(fh)
 
 OHLCV = ["Open", "High", "Low", "Close", "Volume"]
+LAST_GOOD = CACHE_DIR / "last_good"
+
+
+def _wait_for_network(timeout: float = 90.0) -> bool:
+    """Scheduled jobs often fire the moment the Mac wakes, before DNS is up.
+    Wait for Yahoo to resolve instead of downloading nothing and crashing."""
+    import socket
+    deadline = time.time() + timeout
+    while True:
+        try:
+            socket.getaddrinfo("query1.finance.yahoo.com", 443)
+            return True
+        except OSError:
+            if time.time() >= deadline:
+                print(f"[loader] WARNING network not reachable after {timeout:.0f}s")
+                return False
+            time.sleep(5)
+
+
+def _lg_path(ticker: str) -> Path:
+    return LAST_GOOD / (ticker.replace("/", "_").replace("^", "_idx_") + ".pkl")
+
+
+def _save_last_good(data: Dict[str, pd.DataFrame]) -> None:
+    LAST_GOOD.mkdir(exist_ok=True)
+    for t, df in data.items():
+        try:
+            path = _lg_path(t)
+            if path.exists():
+                old = pd.read_pickle(path)
+                df = df.combine_first(old)
+            df.sort_index().to_pickle(path)
+        except Exception as e:  # never let bookkeeping break a run
+            print(f"[loader] last-good save failed for {t}: {e}")
+
+
+def _load_last_good(ticker: str, start: str) -> Optional[pd.DataFrame]:
+    path = _lg_path(ticker)
+    if not path.exists():
+        return None
+    df = pd.read_pickle(path)
+    df = df[df.index >= pd.Timestamp(start, tz=getattr(df.index, "tz", None))]
+    return df if len(df) else None
 
 
 def _cache_path(tickers: Iterable[str], start: str, end: str, interval: str) -> Path:
@@ -105,15 +148,24 @@ def load_prices(
     end: Optional[str] = None,
     interval: str = "1d",
     use_cache: bool = True,
+    allow_stale: bool = False,
 ) -> Dict[str, pd.DataFrame]:
-    """Return {ticker: OHLCV DataFrame} indexed by timestamp."""
+    """Return {ticker: OHLCV DataFrame} indexed by timestamp.
+
+    allow_stale=True (reports only, never order generation): if Yahoo returns
+    nothing for a ticker, fall back to the last successfully downloaded bars."""
     tickers = list(tickers)
     end = end or date.today().isoformat()
     path = _cache_path(tickers, start, end, interval)
     if use_cache and path.exists():
         with open(path, "rb") as fh:
             return pickle.load(fh)
-    data = _download(tickers, start, end, interval)
+    _wait_for_network()
+    try:
+        data = _download(tickers, start, end, interval)
+    except Exception as e:
+        print(f"[loader] WARNING batch download failed: {e}")
+        data = {}
     missing = [t for t in tickers if t not in data]
     for attempt in range(2):  # Yahoo is flaky under batch load; retry stragglers one by one
         if not missing:
@@ -130,7 +182,16 @@ def load_prices(
     if missing:
         print(f"[loader] WARNING no data for: {missing}")
     data = {t: clean_split_glitches(df) for t, df in data.items()}
-    if data:
+    if interval == "1d":
+        _save_last_good(data)
+        if allow_stale and missing:
+            for t in list(missing):
+                df = _load_last_good(t, start)
+                if df is not None:
+                    data[t] = df
+                    missing.remove(t)
+                    print(f"[loader] using last-good bars for {t} (through {df.index[-1].date()})")
+    if data and not missing:
         with open(path, "wb") as fh:
             pickle.dump(data, fh)
     return data

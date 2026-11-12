@@ -24,14 +24,14 @@ def account_equity(path: Path) -> tuple[float, int]:
     pos = {s: p for s, p in st["positions"].items() if abs(p["qty"]) > 1e-9}
     mv = 0.0
     if pos:
-        px = close_matrix(load_prices(list(pos), start=(date.today() - timedelta(days=12)).isoformat(), use_cache=False)).ffill().iloc[-1]
+        _cm = close_matrix(load_prices(list(pos), start=(date.today() - timedelta(days=12)).isoformat(), use_cache=False, allow_stale=True)).ffill(); px = _cm.iloc[-1] if len(_cm) else {}
         mv = sum(p["qty"] * float(px.get(s, p["avg_price"])) for s, p in pos.items())
     return round(st["cash"] + mv, 2), len(pos)
 
 
 def bench_week(sym: str) -> float:
     from alpha_forge.data.loader import load_prices, close_matrix
-    c = close_matrix(load_prices([sym], start=(date.today() - timedelta(days=15)).isoformat(), use_cache=False)).iloc[:, 0].dropna()
+    c = close_matrix(load_prices([sym], start=(date.today() - timedelta(days=15)).isoformat(), use_cache=False, allow_stale=True)).iloc[:, 0].dropna()
     return round((c.iloc[-1] / c.iloc[-6] - 1) * 100, 2) if len(c) > 6 else 0.0
 
 

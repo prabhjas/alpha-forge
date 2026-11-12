@@ -13,7 +13,7 @@ sectors = yaml.safe_load(open(ROOT / "config" / "sectors.yaml"))
 sec_of = {s: sec for sec, syms in sectors.items() for s in syms}
 
 # --- market regime ---
-nifty = close_matrix(load_prices(UNIVERSES["india_benchmark"], start="2024-06-01", use_cache=False)).iloc[:,0].dropna()
+nifty = close_matrix(load_prices(UNIVERSES["india_benchmark"], start="2024-06-01", use_cache=False, allow_stale=True)).iloc[:,0].dropna()
 sma200 = nifty.rolling(200).mean().iloc[-1]
 regime = "uptrend" if nifty.iloc[-1] > sma200 else "downtrend"
 mkt = {"nifty": round(float(nifty.iloc[-1])), "sma200": round(float(sma200)),
@@ -26,7 +26,7 @@ def equity(path):
     pos = {s:p for s,p in d["positions"].items() if abs(p["qty"])>1e-9}
     mv=0.0
     if pos:
-        px = close_matrix(load_prices(list(pos), start=(date.today()-timedelta(days=10)).isoformat(), use_cache=False)).ffill().iloc[-1]
+        _cm = close_matrix(load_prices(list(pos), start=(date.today()-timedelta(days=10)).isoformat(), use_cache=False, allow_stale=True)).ffill(); px = _cm.iloc[-1] if len(_cm) else {}
         mv = sum(p["qty"]*float(px.get(s,p["avg_price"])) for s,p in pos.items())
     return round(d["cash"]+mv,2), len(pos)
 books=[]
@@ -40,7 +40,7 @@ for p in sorted(CACHE.glob("paper_*.json")):
 # --- sector-tilt holdings + flags (momentum/trend based, fast) ---
 book = json.loads((CACHE/"paper_india_sector.json").read_text())
 pos = {s:p for s,p in book["positions"].items() if abs(p["qty"])>1e-9}
-c = close_matrix(load_prices(list(pos), start="2023-06-01", use_cache=False)); last=c.ffill().iloc[-1]
+c = close_matrix(load_prices(list(pos), start="2023-06-01", use_cache=False, allow_stale=True)); last=c.ffill().iloc[-1]
 mv_total = sum(pos[s]["qty"]*float(last.get(s,pos[s]["avg_price"])) for s in pos)
 holds=[]
 for s in pos:
@@ -54,7 +54,7 @@ holds.sort(key=lambda h:-h["wt"])
 
 # --- sector strength ---
 allsyms=sorted({x for v in sectors.values() for x in v})
-ca=close_matrix(load_prices(allsyms,start="2024-06-01",use_cache=False))
+ca=close_matrix(load_prices(allsyms,start="2024-06-01",use_cache=False, allow_stale=True))
 secrows=[]
 for sec,syms in sectors.items():
     ms=[]

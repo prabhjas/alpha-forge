@@ -1,0 +1,671 @@
+<title>Alpha Forge Deep Dive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #fafaf8; --bg2: #fff; --fg: #1a1d23; --fg2: #5a5e6a; --fg3: #8b8f9c;
+  --accent: #2563eb; --green: #16a34a; --red: #dc2626; --amber: #d97706;
+  --border: #e5e5e0; --card-shadow: 0 1px 3px rgba(0,0,0,.06);
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111318; --bg2: #1a1d24; --fg: #e8e9ed; --fg2: #9ba0ad; --fg3: #6b7080;
+  --accent: #60a5fa; --green: #4ade80; --red: #f87171; --amber: #fbbf24;
+  --border: #2a2d35; --card-shadow: 0 1px 3px rgba(0,0,0,.3); color-scheme: dark;
+}}
+:root[data-theme="dark"] {
+  --bg: #111318; --bg2: #1a1d24; --fg: #e8e9ed; --fg2: #9ba0ad; --fg3: #6b7080;
+  --accent: #60a5fa; --green: #4ade80; --red: #f87171; --amber: #fbbf24;
+  --border: #2a2d35; --card-shadow: 0 1px 3px rgba(0,0,0,.3); color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0; max-width: 960px; margin: 0 auto; line-height: 1.5;
+}
+h1,h2,h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.25rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+.sub { color: var(--fg2); font-size: .875rem; margin-top: 4px; }
+.sec { margin-top: 2rem; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; box-shadow: var(--card-shadow); }
+.g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .75rem; }
+.g3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; }
+.pill { display: inline-block; font-size: .65rem; font-weight: 600; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; vertical-align: middle; }
+.p-g { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+.p-r { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+.p-a { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+.p-b { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+.p-purple { background: color-mix(in srgb, #7c3aed 15%, transparent); color: #7c3aed; }
+.pos { color: var(--green); } .neg { color: var(--red); }
+table { width: 100%; border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--fg3); padding: .5rem .4rem; border-bottom: 2px solid var(--border); }
+td { padding: .45rem .4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tab-nav { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1rem; overflow-x: auto; }
+.tab-btn { background: none; border: none; padding: .5rem .75rem; font-family: var(--font-display); font-weight: 500; font-size: .85rem; color: var(--fg3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+.src-row { display: flex; gap: .5rem; align-items: center; font-size: .8rem; padding: .35rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.src-row:last-child { border-bottom: none; }
+.badge-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.overlap { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; }
+.alloc-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin: .75rem 0; }
+.alloc-seg { display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 600; color: #fff; min-width: 20px; }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem .75rem; font-size: .75rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+.stat-tile { text-align: center; padding: .75rem .5rem; }
+.stat-val { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: .7rem; color: var(--fg2); text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+.scenario-row { display: flex; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
+.scenario-row:last-child { border-bottom: none; }
+.disclaimer { font-size: .72rem; color: var(--fg3); line-height: 1.5; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.overlap-card { display: flex; flex-direction: column; gap: .4rem; }
+.overlap-header { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; flex-wrap: wrap; }
+.stock-name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+.metric-row { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .78rem; color: var(--fg2); font-variant-numeric: tabular-nums; }
+.metric-row span { white-space: nowrap; }
+.source-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: .25rem; }
+.src-badge { font-size: .65rem; font-weight: 500; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+.signal-box { padding: .5rem .75rem; border-radius: 6px; font-size: .82rem; line-height: 1.4; }
+.signal-strong { background: color-mix(in srgb, var(--green) 10%, transparent); border-left: 3px solid var(--green); }
+.signal-moderate { background: color-mix(in srgb, var(--amber) 10%, transparent); border-left: 3px solid var(--amber); }
+.signal-weak { background: color-mix(in srgb, var(--red) 10%, transparent); border-left: 3px solid var(--red); }
+.sector-bar { display: flex; align-items: center; gap: .5rem; font-size: .8rem; padding: .3rem 0; border-bottom: 1px solid var(--border); }
+.sector-bar:last-child { border-bottom: none; }
+.sector-rank { font-family: var(--font-display); font-weight: 600; width: 2rem; text-align: center; font-variant-numeric: tabular-nums; }
+.sector-meter { width: 100px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.sector-fill { height: 100%; border-radius: 3px; }
+.sector-val { width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+</style>
+
+<header style="padding-top:1.5rem;">
+  <h1>Alpha Forge Deep Dive</h1>
+  <p class="sub">₹3L plan &middot; Cross-referencing Alpha Forge engine + INDmoney + Angel One + ET Money &middot; Updated 12 Nov 2026</p>
+</header>
+
+<!-- ========== LIVE CHECK ========== -->
+<div class="sec">
+  <h2>Live Check — 12 Nov 2026</h2>
+  <p class="sub">Prices as of market close 11 Nov. If you had bought at plan prices (10 Nov), here's where you'd stand.</p>
+  <div class="g3" style="margin-top:.5rem;">
+    <div class="card stat-tile"><div class="stat-val pos">+₹1,007</div><div class="stat-label">Total P&L</div></div>
+    <div class="card stat-tile"><div class="stat-val pos">+0.45%</div><div class="stat-label">Portfolio Return</div></div>
+    <div class="card stat-tile"><div class="stat-val" style="color:var(--fg);">₹2,22,854</div><div class="stat-label">Portfolio Value</div></div>
+  </div>
+  <div class="card" style="margin-top:.75rem;">
+    <h3>India — P&L by Stock</h3>
+    <div style="overflow-x:auto;margin-top:.5rem;">
+      <table>
+        <thead><tr><th>Stock</th><th>Plan ₹</th><th>Now ₹</th><th>Chg</th><th>Qty</th><th>P&L</th></tr></thead>
+        <tbody>
+          <tr><td><b>NIFTYBEES</b></td><td>285.0</td><td>286.5</td><td class="pos">+0.53%</td><td>140</td><td class="pos">+₹210</td></tr>
+          <tr><td><b>KOTAK BANK</b></td><td>479.5</td><td>487.7</td><td class="pos">+1.71%</td><td>22</td><td class="pos">+₹180</td></tr>
+          <tr><td><b>ICICI BANK</b></td><td>1,569</td><td>1,571.6</td><td class="pos">+0.17%</td><td>7</td><td class="pos">+₹18</td></tr>
+          <tr><td><b>TITAN</b></td><td>4,985</td><td>4,970</td><td class="neg">-0.30%</td><td>2</td><td class="neg">-₹30</td></tr>
+          <tr><td><b>TECH MAHINDRA</b></td><td>1,805</td><td>1,788.5</td><td class="neg">-0.91%</td><td>5</td><td class="neg">-₹82</td></tr>
+          <tr><td><b>SUN PHARMA</b></td><td>1,904</td><td>1,902.3</td><td class="neg">-0.09%</td><td>5</td><td class="neg">-₹9</td></tr>
+          <tr><td><b>BHARTI AIRTEL</b></td><td>2,072</td><td>2,109</td><td class="pos">+1.79%</td><td>3</td><td class="pos">+₹111</td></tr>
+          <tr style="font-weight:600;border-top:2px solid var(--border);"><td>INDIA TOTAL</td><td></td><td></td><td class="pos">+0.41%</td><td></td><td class="pos">+₹399</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:.75rem;">
+    <h3>US — P&L by Stock</h3>
+    <div style="overflow-x:auto;margin-top:.5rem;">
+      <table>
+        <thead><tr><th>Stock</th><th>Plan $</th><th>Now $</th><th>Chg</th><th>Shr</th><th>P&L</th></tr></thead>
+        <tbody>
+          <tr><td><b>XLV</b></td><td>188.88</td><td>188.95</td><td class="pos">+0.04%</td><td>1.5</td><td class="pos">+$0.10</td></tr>
+          <tr><td><b>LLY</b></td><td>1,432</td><td>1,437.29</td><td class="pos">+0.37%</td><td>0.15</td><td class="pos">+$0.79</td></tr>
+          <tr><td><b>AAPL</b></td><td>348.50</td><td>355.63</td><td class="pos">+2.05%</td><td>0.6</td><td class="pos">+$4.28</td></tr>
+          <tr><td><b>BRK-B</b></td><td>583.30</td><td>588.24</td><td class="pos">+0.85%</td><td>0.35</td><td class="pos">+$1.73</td></tr>
+          <tr><td><b>MSFT</b></td><td>533.00</td><td>521.13</td><td class="neg">-2.23%</td><td>0.4</td><td class="neg">-$4.75</td></tr>
+          <tr><td><b>COST</b></td><td>1,066</td><td>1,087.61</td><td class="pos">+2.03%</td><td>0.2</td><td class="pos">+$4.32</td></tr>
+          <tr style="font-weight:600;border-top:2px solid var(--border);"><td>US TOTAL</td><td></td><td></td><td class="pos">+0.48%</td><td></td><td class="pos">+$6.48 (₹609)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:.75rem;">
+    <h3>Market Context</h3>
+    <div style="font-size:.85rem;display:flex;flex-direction:column;gap:.4rem;">
+      <div class="scenario-row"><span>Nifty 50</span><span class="pos">25,255 (+0.84%) — just 1,000 pts from ATH</span></div>
+      <div class="scenario-row"><span>S&P 500 (SPY)</span><span class="pos">$759.81 (+1.32%)</span></div>
+      <div><span class="pill p-g">no alerts</span> No protective rules triggered. All stops safe.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CROSS-REFERENCE VERDICT ========== -->
+<div class="sec">
+  <h2>Cross-Reference Verdict</h2>
+  <p class="sub">Stocks that appear across multiple sources get the highest confidence. The engine's own momentum + trend score is the tiebreaker.</p>
+
+  <div class="g2" style="margin-top:.75rem;">
+    <!-- TIER 1: Multi-source overlap -->
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">ICICI Bank</span> <span class="pill p-g">Tier 1</span></div>
+        <span style="font-weight:600;">₹1,572</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge #4</span>
+        <span class="src-badge" style="border-color:var(--accent);">INDmoney High Vol</span>
+        <span class="src-badge" style="border-color:var(--amber);">Banks #1 sector</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="pos">+11%</b></span><span>Vol: 23%</span><span>RSI: 81</span><span>Profit +14.5% YoY</span></div>
+      <div class="signal-box signal-strong">Strong overlap: engine's #4 pick, INDmoney high-volume mover, #1 sector (banks). 63% win rate on monthly returns, median +1.9%/month.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Titan</span> <span class="pill p-g">Tier 1</span></div>
+        <span style="font-weight:600;">₹4,970</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge #3</span>
+        <span class="src-badge" style="border-color:var(--accent);">ET Money QGMV top 20</span>
+        <span class="src-badge" style="border-color:var(--amber);">Kalyan Jewellers breakout</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="neg">-1.7%</b></span><span>Vol: 23%</span><span>RSI: 74</span><span>Revenue +26% YoY</span></div>
+      <div class="signal-box signal-strong">Strong overlap: engine's #3 by score, ET Money QGMV rated, jewellery sector surging (Kalyan +10% resistance breakout). 60% win rate, median +2.3%/month.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Kotak Bank</span> <span class="pill p-g">Tier 1</span></div>
+        <span style="font-weight:600;">₹487.7</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge #2</span>
+        <span class="src-badge" style="border-color:var(--accent);">Banks #1 sector</span>
+        <span class="src-badge" style="border-color:var(--amber);">RBI digital curbs lifted</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="pos">+22%</b></span><span>Vol: 24%</span><span>RSI: 72</span><span>Zero bear signals</span></div>
+      <div class="signal-box signal-strong">Strongest engine score among banks. RBI just lifted digital banking curbs — a catalyst. 7 bull points, 0 bear points. 62% monthly win rate.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">HDFC Bank</span> <span class="pill p-g">Tier 1</span></div>
+        <span style="font-weight:600;">₹806.6</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge engine</span>
+        <span class="src-badge" style="border-color:var(--accent);">INDmoney High Vol #3</span>
+        <span class="src-badge" style="border-color:var(--amber);">ET Money HDFC AMC rated</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="pos">+9.2%</b></span><span>Vol: 27%</span><span>RSI: 76</span><span>Bonus shares consideration</span></div>
+      <div class="signal-box signal-strong">India's largest private bank, high volume mover on INDmoney, bonus share catalyst. Conservative but steady.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Bajaj Auto</span> <span class="pill p-a">Tier 2</span></div>
+        <span style="font-weight:600;">₹11,040</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge engine</span>
+        <span class="src-badge" style="border-color:var(--accent);">ET Money QGMV top 20</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="neg">-6%</b></span><span>Vol: 22%</span><span>RSI: 63</span><span>70% monthly win rate</span></div>
+      <div class="signal-box signal-moderate">Engine + ET Money overlap. Highest 5yr monthly win rate (70%) in Nifty50. Auto sector is weak (#10) but this is the quality exception. Median +3.0%/mo.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">SBI</span> <span class="pill p-a">Tier 2</span></div>
+        <span style="font-weight:600;">₹1,061</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge engine</span>
+        <span class="src-badge" style="border-color:var(--accent);">INDmoney High Vol #4</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="neg">-2.7%</b></span><span>Vol: 23%</span><span>RSI: 68</span><span>Profit +28% YoY</span></div>
+      <div class="signal-box signal-moderate">Engine + INDmoney overlap. Profit surged 28%, launched ₹10K cr infra bond. Banks #1 sector. 65% monthly win rate. Cheapest valuation among big banks.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Torrent Pharma</span> <span class="pill p-a">Tier 2</span></div>
+        <span style="font-weight:600;">₹4,743</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--amber);">Angel One BUY</span>
+        <span class="src-badge" style="border-color:var(--green);">Pharma sector play</span>
+      </div>
+      <div class="metric-row"><span>Entry: ₹4,743-4,744</span><span>Target: ₹4,910</span><span>SL: ₹4,650</span><span>+3.2% potential</span></div>
+      <div class="signal-box signal-moderate">Angel One analyst call. Complements Sun Pharma as pharma diversification. Short-term swing trade target ₹4,910.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Ajanta Pharma</span> <span class="pill p-a">Tier 2</span></div>
+        <span style="font-weight:600;">₹3,345</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--amber);">Angel One BUY</span>
+        <span class="src-badge" style="border-color:var(--green);">Pharma sector play</span>
+      </div>
+      <div class="metric-row"><span>Entry: ₹3,350-3,355</span><span>Target: ₹3,590</span><span>SL: ₹3,200</span><span>+7% potential</span></div>
+      <div class="signal-box signal-moderate">Angel One analyst call with +7% target. Quality pharma name with better upside than Torrent.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Tech Mahindra</span> <span class="pill p-b">Engine pick</span></div>
+        <span style="font-weight:600;">₹1,789</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge #5</span>
+        <span class="src-badge" style="border-color:var(--accent);">IT sector #2</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="pos">+11%</b></span><span>Vol: 42%</span><span>RSI: 65</span><span>Profit +153% YoY</span></div>
+      <div class="signal-box signal-moderate">Engine-only but #5 ranked, #2 sector (IT). 153% profit recovery, $200M deal. Higher vol but big recovery potential. Median +1.3%/mo.</div>
+    </div>
+
+    <div class="card overlap-card">
+      <div class="overlap-header">
+        <div><span class="stock-name">Sun Pharma</span> <span class="pill p-b">Engine pick</span></div>
+        <span style="font-weight:600;">₹1,902</span>
+      </div>
+      <div class="source-badges">
+        <span class="src-badge" style="border-color:var(--green);">Alpha Forge engine</span>
+        <span class="src-badge" style="border-color:var(--accent);">Lowest vol in Nifty50</span>
+      </div>
+      <div class="metric-row"><span>3m: <b class="neg">-2.1%</b></span><span>Vol: 17%</span><span>RSI: 73</span><span>Profit +28% YoY</span></div>
+      <div class="signal-box signal-strong">Defensive anchor — lowest annualised vol (17%) in the entire Nifty50. Profit +28%, FDA nods for Taro. Worst monthly loss only -8.5% (vs Nifty -11.3%).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ANGEL ONE UNIQUE CALLS ========== -->
+<div class="sec">
+  <h2>Angel One Exclusive Calls</h2>
+  <p class="sub">Active analyst calls from Angel One not in the engine's universe — for awareness</p>
+  <div style="overflow-x:auto;" class="card" style="margin-top:.5rem;">
+    <table>
+      <thead><tr><th>Stock</th><th>Type</th><th>Entry</th><th>Target</th><th>SL</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><b>Dabur</b></td><td>Short term</td><td>₹370-381</td><td>₹400</td><td>₹370</td><td class="pos">+6.8% potential</td></tr>
+        <tr><td><b>HAL</b></td><td>Short term</td><td>₹5,025-5,027</td><td>₹5,130</td><td>₹4,960</td><td class="neg">-0.5% so far</td></tr>
+        <tr><td><b>REC Ltd</b></td><td>Short term</td><td>₹298-299</td><td>₹321</td><td>₹289</td><td class="pos">+2.9% achieved</td></tr>
+        <tr><td><b>Belrise Ind.</b></td><td>Short term</td><td>₹219</td><td>₹227</td><td>₹214</td><td class="neg">-0.9%</td></tr>
+        <tr><td><b>GIC Re</b></td><td>Long term</td><td>₹353</td><td>₹441</td><td>-</td><td class="neg">-4.8% (Sep call)</td></tr>
+        <tr><td><b>CCL Products</b></td><td>Long term</td><td>₹869</td><td>₹1,250</td><td>-</td><td class="pos">+11.7% achieved</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:.78rem;color:var(--fg2);margin-top:.5rem;">These are outside our Nifty50/ETF universe. Small-cap/mid-cap names carry higher risk. The engine does not track these.</p>
+  </div>
+</div>
+
+<!-- ========== INDmoney SIGNALS ========== -->
+<div class="sec">
+  <h2>INDmoney Live Signals</h2>
+  <p class="sub">Swing calls and breakout signals from INDmoney's Equity Research (by Multyfi)</p>
+  <div class="card" style="margin-top:.5rem;">
+    <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;">
+      <div><span class="pill p-g">swing buy</span> <b>FDC</b> — Entry ₹392, Target ₹440 (+12.2%), SL ₹372. Up +0.5% since rec (2d ago).</div>
+      <div><span class="pill p-g">swing buy</span> <b>MV Electrosystems</b> — Potential +11.4%. Down -1.2% since rec (6d ago).</div>
+      <div><span class="pill p-g">breakout</span> <b>Kalyan Jewellers</b> — Resistance breakout today, +10.1% on massive volume (5.3 cr shares).</div>
+      <div><span class="pill p-b">high volume</span> <b>Bank of Baroda</b> — +5.0% today, highest volume among large caps (3.3 cr).</div>
+      <div style="margin-top:.25rem;color:var(--fg3);font-size:.78rem;">These are short-term swing/intraday signals, not necessarily aligned with 1-2 month holding horizon.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ET MONEY QGMV ========== -->
+<div class="sec">
+  <h2>ET Money QGMV Top Rated</h2>
+  <p class="sub">Quality + Growth + Momentum + Value screener — top 20 stocks</p>
+  <div class="card" style="margin-top:.5rem;">
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;font-size:.82rem;">
+      <span class="pill p-g">MCX</span> <span class="pill p-g">Bank of Maharashtra</span> <span class="pill p-g">Karur Vysya Bank</span>
+      <span class="pill p-g">Hindustan Copper</span> <span class="pill p-g">Solar Industries</span> <span class="pill p-g">BSE</span>
+      <span class="pill p-g">GE Vernova T&D</span> <span class="pill p-g">Muthoot Finance</span> <span class="pill p-g">Garden Reach</span>
+      <span class="pill p-g">Trent</span> <span class="pill p-b">Titan</span> <span class="pill p-g">Chennai Petro</span>
+      <span class="pill p-g">Hindustan Zinc</span> <span class="pill p-b">Bajaj Auto</span> <span class="pill p-g">NALCO</span>
+      <span class="pill p-g">Oracle Financial</span> <span class="pill p-g">Nippon Life AMC</span> <span class="pill p-g">Cholamandalam</span>
+      <span class="pill p-g">HDFC AMC</span> <span class="pill p-g">Lloyds Metals</span>
+    </div>
+    <p style="font-size:.78rem;color:var(--fg2);margin-top:.5rem;"><b>Overlap with our picks:</b> Titan and Bajaj Auto (highlighted blue) appear in both ET Money QGMV and the engine's top picks — highest cross-platform confidence.</p>
+  </div>
+</div>
+
+<!-- ========== SECTOR STRENGTH ========== -->
+<div class="sec">
+  <h2>Sector Strength</h2>
+  <div class="card" style="margin-top:.5rem;" id="sector-bars"></div>
+</div>
+
+<!-- ========== FINAL ALLOCATION ========== -->
+<div class="sec">
+  <h2>Final ₹3L Allocation (Multi-Source Optimised)</h2>
+  <p class="sub">Picks weighted by cross-platform confidence, sector diversification, and 1.5-month horizon (till New Year)</p>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>India — ₹1,50,000</h3>
+    <div class="alloc-bar" id="india-bar"></div>
+    <div class="legend" id="india-leg"></div>
+    <div style="overflow-x:auto;margin-top:.75rem;">
+      <table id="india-tbl"><thead><tr><th>Stock</th><th>Sector</th><th>Price</th><th>Qty</th><th>Amount</th><th>Sources</th><th>Rationale</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>US — ₹1,00,000 (~$1,065)</h3>
+    <div class="alloc-bar" id="us-bar"></div>
+    <div class="legend" id="us-leg"></div>
+    <div style="overflow-x:auto;margin-top:.75rem;">
+      <table id="us-tbl"><thead><tr><th>Stock</th><th>Sector</th><th>Price</th><th>Shares</th><th>Amount</th><th>Rationale</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>Reserve — ₹50,000</h3>
+    <p style="font-size:.85rem;color:var(--fg2);">Liquid fund / sweep FD. Deploy into a dip or second tranche around 25 Nov if market holds above 50-day average.</p>
+  </div>
+</div>
+
+<!-- ========== PROJECTIONS ========== -->
+<div class="sec">
+  <h2>Earnings Projections — 1 / 3 / 6 Months</h2>
+  <p class="sub">Based on 5-year monthly return distributions for each stock, compounded and weighted by allocation. ₹3,00,000 invested.</p>
+
+  <!-- Growth chart -->
+  <div class="card" style="margin-top:.75rem;padding:.75rem;">
+    <canvas id="growth-chart" style="width:100%;height:280px;"></canvas>
+  </div>
+
+  <!-- Summary tiles per horizon -->
+  <div class="tab-nav" style="margin-top:1rem;">
+    <button class="tab-btn active" data-tab="h1m">1 Month</button>
+    <button class="tab-btn" data-tab="h3m">3 Months</button>
+    <button class="tab-btn" data-tab="h6m">6 Months</button>
+  </div>
+
+  <div class="tab-panel active" id="h1m">
+    <div class="g3" id="tiles-1m"></div>
+    <div class="card" style="margin-top:.75rem;">
+      <h3>Scenarios — 1 Month (mid-Dec 2026)</h3>
+      <div style="font-size:.85rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;" id="rows-1m"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="h3m">
+    <div class="g3" id="tiles-3m"></div>
+    <div class="card" style="margin-top:.75rem;">
+      <h3>Scenarios — 3 Months (mid-Feb 2027)</h3>
+      <div style="font-size:.85rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;" id="rows-3m"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="h6m">
+    <div class="g3" id="tiles-6m"></div>
+    <div class="card" style="margin-top:.75rem;">
+      <h3>Scenarios — 6 Months (mid-May 2027)</h3>
+      <div style="font-size:.85rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;" id="rows-6m"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>Per-Stock Potential (monthly median × holding period)</h3>
+    <div style="overflow-x:auto;">
+      <table id="stock-proj-tbl">
+        <thead><tr><th>Stock</th><th>Weight</th><th>Monthly Med.</th><th>1-mo</th><th>3-mo</th><th>6-mo</th><th>Win Rate</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p style="font-size:.72rem;color:var(--fg3);margin-top:.5rem;">Compounded: (1 + median monthly return)^months − 1, scaled by allocation weight. Past distributions don't guarantee future returns.</p>
+  </div>
+</div>
+
+<!-- ========== PROTECTIVE RULES ========== -->
+<div class="sec">
+  <h2>Protective Rules</h2>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;">
+      <div><span class="pill p-r">stop-loss</span> Sell any stock down 8% from buy price or closing below its 50-day average</div>
+      <div><span class="pill p-a">plan brake</span> If total portfolio drops ₹18,000 (6%), sell half the stock positions into liquid fund</div>
+      <div><span class="pill p-b">two tranches</span> Buy only half NIFTYBEES now; buy the rest 25 Nov if Nifty still above 50-day avg</div>
+      <div><span class="pill p-g">review date</span> 11 December — mid-point review. Full reassessment before New Year.</div>
+      <div><span class="pill p-purple">jan check</span> If portfolio is up by New Year, consider taking 25-50% profit on the winners to lock in gains</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CONNECTORS ========== -->
+<div class="sec">
+  <h2>Broker & Connector Status</h2>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;">
+      <div><span class="pill p-g">connected</span> <b>AngelOne SmartAPI</b> — paper mode. All India orders route here.</div>
+      <div><span class="pill p-a">keys empty</span> <b>Kite (Zerodha)</b> — not needed if using AngelOne for NSE.</div>
+      <div><span class="pill p-a">keys empty</span> <b>Alpaca</b> — needed for US live trades. Fill in keys or use INDmoney Global.</div>
+      <div><span class="pill p-a">mcp available</span> <b>INDmoney</b> — MCP at <code>https://mcp.indmoney.com/mcp</code>. To connect: add this URL in Claude Code MCP settings (<code>/mcp</code> command in an interactive terminal). Once connected, I can read your portfolio, place paper orders, and pull live recommendations programmatically.</div>
+      <div><span class="pill p-b">browser</span> <b>INDmoney / Angel One / ET Money</b> — all three accessible via your Chrome. I pulled live recommendations from all three for this analysis.</div>
+    </div>
+  </div>
+</div>
+
+<p class="disclaimer">
+  <strong>Not investment advice.</strong> This analysis cross-references three platforms' recommendations with the Alpha Forge engine's quantitative signals. Platform recommendations (INDmoney, Angel One, ET Money) are produced by those platforms' own analysts and algorithms — their accuracy is not guaranteed. Past returns do not predict future performance. You review and place every order; this system never moves money. All figures approximate based on last available closing prices.
+</p>
+
+<script>
+const SECTORS = [
+  {n:"Banks",m:7.1},{n:"IT",m:4.6},{n:"Cement & Infra",m:2.0},{n:"Consumer",m:0.7},
+  {n:"Energy",m:-1.1},{n:"Pharma",m:-2.1},{n:"Metals",m:-2.8},{n:"FMCG",m:-4.6},
+  {n:"NBFC & Insurance",m:-5.8},{n:"Autos",m:-7.1}
+];
+const mx=Math.max(...SECTORS.map(s=>Math.abs(s.m)));
+document.getElementById("sector-bars").innerHTML=SECTORS.map((s,i)=>{
+  const p=Math.abs(s.m)/mx*100,c=s.m>=0?"var(--green)":"var(--red)";
+  return `<div class="sector-bar"><span class="sector-rank">#${i+1}</span><span style="flex:1;min-width:0">${s.n}</span><div class="sector-meter"><div class="sector-fill" style="width:${p}%;background:${c}"></div></div><span class="sector-val ${s.m>=0?'pos':'neg'}">${s.m>0?'+':''}${s.m}%</span></div>`;
+}).join("");
+
+// Allocation data
+const IA=[
+  {s:"NIFTYBEES",p:286.5,q:140,sec:"Index",c:"#2563eb",src:"Engine",why:"Core ETF — liquid, lowest risk. Half now, half 25 Nov."},
+  {s:"KOTAK BANK",p:487.7,q:22,sec:"Banks",c:"#16a34a",src:"Engine + Sector #1",why:"Zero bear signals. RBI curbs lifted. 3m +22%."},
+  {s:"ICICI BANK",p:1571.6,q:7,sec:"Banks",c:"#059669",src:"Engine + INDmoney",why:"Multi-source overlap. Profit +14.5%, 52-wk high hit."},
+  {s:"TITAN",p:4970,q:2,sec:"Consumer",c:"#ea580c",src:"Engine + ET Money",why:"QGMV rated. Revenue +26%, brokerages retain Buy."},
+  {s:"TECH MAHINDRA",p:1788.5,q:5,sec:"IT",c:"#7c3aed",src:"Engine #5",why:"IT sector #2. Profit +153%, $200M deal."},
+  {s:"SUN PHARMA",p:1902.3,q:5,sec:"Pharma",c:"#dc2626",src:"Engine",why:"Lowest vol (17%). Defensive anchor. Profit +28%."},
+  {s:"BHARTI AIRTEL",p:2109,q:3,sec:"Telecom",c:"#0891b2",src:"Engine",why:"ARPU rising, Africa merger. +1.8% today."}
+];
+const UA=[
+  {s:"XLV",p:188.95,q:1.5,sec:"Healthcare",c:"#16a34a",why:"#1 ranked. Defensive rotation. Near all-time high."},
+  {s:"LLY",p:1437.29,q:0.15,sec:"Pharma",c:"#dc2626",why:"Mounjaro EU approval. Revenue +42%. Highest conviction."},
+  {s:"AAPL",p:355.63,q:0.6,sec:"Tech",c:"#6b7280",why:"iPhone 18 record. Retail rotating in from NVDA. +2%."},
+  {s:"BRK-B",p:588.24,q:0.35,sec:"Financials",c:"#7c3aed",why:"$335B cash. Lowest US vol (19%). Defensive."},
+  {s:"MSFT",p:521.13,q:0.4,sec:"Tech",c:"#2563eb",why:"Azure +33%. Dipped on AI competition news."},
+  {s:"COST",p:1087.61,q:0.2,sec:"Consumer",c:"#ea580c",why:"Same-store +7.2%. Special dividend catalyst. +2%."}
+];
+
+function renderAlloc(items,barId,legId,tblId,isUS){
+  const tot=items.reduce((s,i)=>s+i.q*i.p,0);
+  document.getElementById(barId).innerHTML=items.map(i=>{
+    const pct=i.q*i.p/tot*100;
+    return `<div class="alloc-seg" style="width:${pct}%;background:${i.c}" title="${i.s}: ${pct.toFixed(1)}%">${pct>7?Math.round(pct)+'%':''}</div>`;
+  }).join("");
+  document.getElementById(legId).innerHTML=items.map(i=>`<span><span class="legend-dot" style="background:${i.c}"></span>${i.s} (${(i.q*i.p/tot*100).toFixed(0)}%)</span>`).join("");
+  const tb=document.querySelector(`#${tblId} tbody`);
+  tb.innerHTML=items.map(i=>{
+    const a=i.q*i.p;const px=isUS?'$'+i.p.toFixed(2):'₹'+Math.round(i.p).toLocaleString("en-IN");
+    const am=isUS?'$'+Math.round(a):'₹'+Math.round(a).toLocaleString("en-IN");
+    return `<tr><td><b>${i.s}</b></td><td>${i.sec}</td><td>${px}</td><td>${isUS?i.q:i.q}</td><td>${am}</td>${!isUS?`<td style="font-size:.72rem">${i.src}</td>`:''}<td style="font-size:.75rem;color:var(--fg2)">${i.why}</td></tr>`;
+  }).join("");
+}
+renderAlloc(IA,"india-bar","india-leg","india-tbl",false);
+renderAlloc(UA,"us-bar","us-leg","us-tbl",true);
+
+// ---- Projections (1m / 3m / 6m) ----
+const indTot=IA.reduce((s,i)=>s+i.q*i.p,0);
+const usTot=UA.reduce((s,i)=>s+i.q*i.p,0);
+const usINR=usTot*93.95;
+const combTot=indTot+usINR; // ~₹2.5L invested (rest is reserve)
+const totalPlan=300000;
+
+// Per-stock monthly stats from the engine's 5-year data
+const STATS={
+  "NIFTYBEES":{med:1.3,p75:4.2,p10:-4.8,worst:-11.3,win:60},
+  "KOTAK BANK":{med:1.8,p75:5.1,p10:-5.2,worst:-14.2,win:62},
+  "ICICI BANK":{med:1.9,p75:4.8,p10:-4.5,worst:-12.8,win:63},
+  "TITAN":{med:2.3,p75:5.8,p10:-5.5,worst:-15.1,win:60},
+  "TECH MAHINDRA":{med:1.3,p75:6.2,p10:-8.2,worst:-18.5,win:55},
+  "SUN PHARMA":{med:1.5,p75:4.0,p10:-3.5,worst:-8.5,win:62},
+  "BHARTI AIRTEL":{med:1.8,p75:5.2,p10:-4.0,worst:-10.2,win:63},
+  "XLV":{med:1.8,p75:4.5,p10:-4.2,worst:-10.5,win:65},
+  "LLY":{med:3.2,p75:8.5,p10:-6.8,worst:-18.2,win:62},
+  "AAPL":{med:2.1,p75:6.0,p10:-5.5,worst:-15.8,win:63},
+  "BRK-B":{med:1.5,p75:3.8,p10:-3.2,worst:-8.0,win:65},
+  "MSFT":{med:2.0,p75:5.2,p10:-4.8,worst:-12.5,win:63},
+  "COST":{med:2.2,p75:5.5,p10:-4.0,worst:-10.0,win:65}
+};
+
+// Combine India + US with INR amounts
+const allPos=[];
+IA.forEach(i=>{const amt=i.q*i.p;const st=STATS[i.s]||{med:1.3,p75:4.2,p10:-4.8,worst:-11,win:58};allPos.push({s:i.s,amt,st,inr:true});});
+UA.forEach(i=>{const amt=i.q*i.p*93.95;const st=STATS[i.s]||{med:1.5,p75:5.0,p10:-5.0,worst:-12,win:60};allPos.push({s:i.s,amt,st,inr:false});});
+
+function compound(monthlyPct,months){return (Math.pow(1+monthlyPct/100,months)-1)*100;}
+
+function portfolioReturn(key,months){
+  let total=0,wtot=0;
+  allPos.forEach(p=>{total+=p.amt*compound(p.st[key],months)/100;wtot+=p.amt;});
+  return {abs:total,pct:total/wtot*100};
+}
+
+const fmt=(amt)=>{const a=Math.round(amt);return (a>=0?'+':'-')+'₹'+Math.abs(a).toLocaleString("en-IN");};
+const fmtPct=(p)=>(p>=0?'+':'')+p.toFixed(1)+'%';
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Render tiles and scenario rows for each horizon
+[{id:'1m',m:1,label:'Mid-Dec 2026'},{id:'3m',m:3,label:'Mid-Feb 2027'},{id:'6m',m:6,label:'Mid-May 2027'}].forEach(h=>{
+  const med=portfolioReturn('med',h.m);
+  const good=portfolioReturn('p75',h.m);
+  const bad=portfolioReturn('p10',h.m);
+  const worst=portfolioReturn('worst',h.m);
+  const invested=combTot;
+
+  document.getElementById('tiles-'+h.id).innerHTML=`
+    <div class="card stat-tile"><div class="stat-val pos">${fmt(med.abs)}</div><div class="stat-label">Typical (${fmtPct(med.pct)})</div></div>
+    <div class="card stat-tile"><div class="stat-val pos">${fmt(good.abs)}</div><div class="stat-label">Good (${fmtPct(good.pct)})</div></div>
+    <div class="card stat-tile"><div class="stat-val neg">${fmt(bad.abs)}</div><div class="stat-label">Bad (${fmtPct(bad.pct)})</div></div>`;
+
+  const rows=document.getElementById('rows-'+h.id);
+  const endTyp=invested+med.abs, endGood=invested+good.abs, endBad=invested+bad.abs, endWorst=invested+worst.abs;
+  rows.innerHTML=`
+    <div class="scenario-row"><span>Invested</span><span>₹${Math.round(invested).toLocaleString("en-IN")}</span></div>
+    <div class="scenario-row"><span>Typical — your portfolio at ${h.label}</span><span class="pos">₹${Math.round(endTyp).toLocaleString("en-IN")} (${fmtPct(med.pct)})</span></div>
+    <div class="scenario-row"><span>Good case — 75th percentile</span><span class="pos">₹${Math.round(endGood).toLocaleString("en-IN")} (${fmtPct(good.pct)})</span></div>
+    <div class="scenario-row"><span>Bad case — 10th percentile</span><span class="neg">₹${Math.round(endBad).toLocaleString("en-IN")} (${fmtPct(bad.pct)})</span></div>
+    <div class="scenario-row"><span>Worst ever month repeated</span><span class="neg">₹${Math.round(endWorst).toLocaleString("en-IN")} (${fmtPct(worst.pct)})</span></div>`;
+});
+
+// Per-stock projection table
+const stb=document.querySelector('#stock-proj-tbl tbody');
+const totalAmt=allPos.reduce((s,p)=>s+p.amt,0);
+stb.innerHTML=allPos.map(p=>{
+  const w=(p.amt/totalAmt*100).toFixed(1);
+  const m1=compound(p.st.med,1),m3=compound(p.st.med,3),m6=compound(p.st.med,6);
+  const a1=Math.round(p.amt*m1/100),a3=Math.round(p.amt*m3/100),a6=Math.round(p.amt*m6/100);
+  return `<tr>
+    <td><b>${p.s}</b></td><td>${w}%</td><td class="pos">${fmtPct(p.st.med)}</td>
+    <td class="pos">${fmt(a1)}</td><td class="pos">${fmt(a3)}</td><td class="pos">${fmt(a6)}</td>
+    <td>${p.st.win}%</td></tr>`;
+}).join("");
+
+// ---- Growth chart (canvas) ----
+(function drawChart(){
+  const canvas=document.getElementById('growth-chart');
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height;
+  const pad={t:30,r:16,b:36,l:60};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+
+  const months=[0,1,2,3,4,5,6];
+  const labels=['Now','1m','2m','3m','4m','5m','6m'];
+  const lines=[
+    {key:'p75',label:'Good',color:'var(--green)',dash:[]},
+    {key:'med',label:'Typical',color:'var(--accent)',dash:[]},
+    {key:'p10',label:'Bad',color:'var(--red)',dash:[4,4]}
+  ];
+
+  const allVals=[];
+  lines.forEach(l=>{months.forEach(m=>{
+    const r=m===0?0:portfolioReturn(l.key,m).abs;
+    allVals.push(combTot+r);
+  });});
+  const minV=Math.min(...allVals)*0.98, maxV=Math.max(...allVals)*1.02;
+
+  const cs=getComputedStyle(document.documentElement);
+  const fg2=cs.getPropertyValue('--fg2').trim()||'#5a5e6a';
+  const fg3=cs.getPropertyValue('--fg3').trim()||'#8b8f9c';
+  const border=cs.getPropertyValue('--border').trim()||'#e5e5e0';
+  const resolveColor=(c)=>{if(c.startsWith('var(')){const n=c.slice(4,-1);return cs.getPropertyValue(n).trim();}return c;};
+
+  ctx.fillStyle='transparent';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle=border; ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);ctx.stroke();
+    const val=minV+(maxV-minV)*i/4;
+    ctx.fillStyle=fg3;ctx.font='11px Inter,system-ui,sans-serif';ctx.textAlign='right';
+    ctx.fillText('₹'+(val/1000).toFixed(0)+'K',pad.l-6,y+4);
+  }
+
+  // X labels
+  months.forEach((m,i)=>{
+    const x=pad.l+cW*i/(months.length-1);
+    ctx.fillStyle=fg3;ctx.font='11px Inter,system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillText(labels[i],x,H-pad.b+18);
+  });
+
+  // Lines
+  lines.forEach(l=>{
+    ctx.beginPath();ctx.setLineDash(l.dash);ctx.strokeStyle=resolveColor(l.color);ctx.lineWidth=2.5;
+    months.forEach((m,i)=>{
+      const v=m===0?combTot:combTot+portfolioReturn(l.key,m).abs;
+      const x=pad.l+cW*i/(months.length-1);
+      const y=pad.t+cH*(1-(v-minV)/(maxV-minV));
+      if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();ctx.setLineDash([]);
+
+    // End label
+    const endVal=combTot+portfolioReturn(l.key,6).abs;
+    const ex=pad.l+cW, ey=pad.t+cH*(1-(endVal-minV)/(maxV-minV));
+    ctx.fillStyle=resolveColor(l.color);ctx.font='bold 11px Inter,system-ui,sans-serif';ctx.textAlign='left';
+    ctx.fillText(l.label,ex-38,ey-8);
+  });
+
+  // Invested line
+  ctx.beginPath();ctx.setLineDash([2,3]);ctx.strokeStyle=fg3;ctx.lineWidth=1;
+  const iy=pad.t+cH*(1-(combTot-minV)/(maxV-minV));
+  ctx.moveTo(pad.l,iy);ctx.lineTo(pad.l+cW,iy);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=fg3;ctx.font='10px Inter,system-ui,sans-serif';ctx.textAlign='left';
+  ctx.fillText('Invested',pad.l+4,iy-5);
+})();
+</script>
