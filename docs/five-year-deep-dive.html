@@ -1,0 +1,561 @@
+<title>5-Year Wealth Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Macro-financial deep dive — dark-first, terminal-inspired with warm accents */
+:root {
+  --bg: #0c0f14; --bg2: #141820; --bg3: #1a1f2a;
+  --fg: #e8eaf0; --fg2: #9ca3b4; --fg3: #6b7280;
+  --accent: #f59e0b; --accent2: #10b981; --red: #ef4444; --blue: #3b82f6;
+  --green: #22c55e; --purple: #a78bfa; --orange: #f97316; --cyan: #06b6d4;
+  --border: #1e2530; --card: #141820;
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f8f9fb; --bg2: #ffffff; --bg3: #f0f1f4;
+    --fg: #111827; --fg2: #4b5563; --fg3: #9ca3af;
+    --accent: #d97706; --accent2: #059669; --red: #dc2626; --blue: #2563eb;
+    --green: #16a34a; --purple: #7c3aed; --orange: #ea580c; --cyan: #0891b2;
+    --border: #e5e7eb; --card: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f8f9fb; --bg2: #ffffff; --bg3: #f0f1f4;
+  --fg: #111827; --fg2: #4b5563; --fg3: #9ca3af;
+  --accent: #d97706; --accent2: #059669; --red: #dc2626; --blue: #2563eb;
+  --green: #16a34a; --purple: #7c3aed; --orange: #ea580c; --cyan: #0891b2;
+  --border: #e5e7eb; --card: #ffffff;
+  color-scheme: light;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  max-width: 860px; margin: 0 auto;
+  line-height: 1.6;
+}
+h1,h2,h3 { font-family: 'Space Grotesk', system-ui, sans-serif; text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(1.6rem,4vw,2.2rem); font-weight: 700; }
+h2 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; }
+h3 { font-size: 1rem; font-weight: 600; }
+.sub { color: var(--fg2); font-size: .85rem; margin: .25rem 0 0; }
+header { padding-block: 1.5rem 1rem; border-bottom: 2px solid var(--accent); }
+.hero-tag { display: inline-block; background: var(--accent); color: #000; font-size: .7rem; font-weight: 600; padding: .15rem .5rem; border-radius: 3px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+.sec { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+.g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .75rem; }
+.g4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .5rem; }
+
+/* Stock cards */
+.stock-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; position: relative; overflow: hidden; }
+.stock-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.stock-card .ticker { font-family: 'Space Grotesk', monospace; font-size: 1.3rem; font-weight: 700; }
+.stock-card .name { color: var(--fg2); font-size: .8rem; margin-top: .1rem; }
+.stock-card .price-row { display: flex; align-items: baseline; gap: .5rem; margin-top: .6rem; }
+.stock-card .price { font-size: 1.4rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stock-card .mcap { font-size: .75rem; color: var(--fg3); }
+
+.thesis { margin-top: .75rem; padding: .75rem; background: var(--bg3); border-radius: 6px; font-size: .85rem; line-height: 1.5; }
+.thesis b { color: var(--accent); }
+
+.pill { display: inline-block; font-size: .65rem; font-weight: 600; padding: .15rem .4rem; border-radius: 3px; text-transform: uppercase; letter-spacing: .05em; }
+.p-solar { background: #f59e0b22; color: var(--accent); }
+.p-def { background: #22c55e22; color: var(--green); }
+.p-mfg { background: #3b82f622; color: var(--blue); }
+.p-alc { background: #a78bfa22; color: var(--purple); }
+.p-ai { background: #06b6d422; color: var(--cyan); }
+.p-bio { background: #ef444422; color: var(--red); }
+.p-ren { background: #f9731622; color: var(--orange); }
+.p-fin { background: #10b98122; color: var(--accent2); }
+
+.metric-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+.metric { font-size: .75rem; padding: .2rem .5rem; background: var(--bg3); border-radius: 4px; font-variant-numeric: tabular-nums; }
+.metric span { color: var(--fg3); }
+
+.why-list { margin-top: .5rem; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+.why-list li { font-size: .82rem; padding-left: 1rem; position: relative; }
+.why-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; }
+th { text-align: left; padding: .4rem .5rem; color: var(--fg3); font-weight: 500; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+td { padding: .5rem; border-bottom: 1px solid var(--border); }
+.pos { color: var(--green); } .neg { color: var(--red); }
+
+.theme-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; min-width: 0; }
+.theme-card h3 { font-size: .85rem; margin-bottom: .25rem; }
+.theme-card p { font-size: .78rem; color: var(--fg2); margin: 0; }
+
+.alloc-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin-top: .5rem; }
+.alloc-seg { display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 600; color: #fff; min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: .35rem .75rem; margin-top: .4rem; font-size: .75rem; }
+.legend span { display: flex; align-items: center; gap: .3rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-top: .5rem; }
+@media (max-width: 500px) { .scenario-grid { grid-template-columns: 1fr; } }
+.scenario-box { background: var(--bg3); border-radius: 6px; padding: .75rem; text-align: center; }
+.scenario-box .val { font-size: 1.3rem; font-weight: 700; font-family: 'Space Grotesk', monospace; }
+.scenario-box .label { font-size: .72rem; color: var(--fg2); margin-top: .2rem; }
+
+.disclaimer { font-size: .72rem; color: var(--fg3); margin-top: 1rem; padding: .75rem; background: var(--bg3); border-radius: 6px; line-height: 1.5; }
+</style>
+
+<header>
+  <div class="hero-tag">5-Year Horizon</div>
+  <h1>Wealth Builder — 8 Stocks for 2026–2031</h1>
+  <p class="sub">Deep dive across AI, Defence, Solar, Pharma, Manufacturing, Alcohol &amp; Fintech &middot; ₹2L portfolio &middot; 13 Nov 2026</p>
+</header>
+
+<!-- ========== MACRO THEMES ========== -->
+<div class="sec">
+  <h2>Why These 8 Themes</h2>
+  <p class="sub">Each pick maps to a structural tailwind that compounds over 5 years, not a one-quarter trade.</p>
+  <div class="g2" style="margin-top:.75rem;">
+    <div class="theme-card">
+      <h3><span class="pill p-solar">Solar</span> India's 500 GW Target</h3>
+      <p>India plans 500 GW renewable capacity by 2030, up from ~190 GW now. ALMM policy blocks Chinese panels. Domestic manufacturers get the entire market.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-def">Defence</span> ₹7L Cr Order Pipeline</h3>
+      <p>India's defence budget crossed ₹6.8L Cr. Government mandating 75% indigenous procurement. Submarines, destroyers, missile systems — multi-year locked orders.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-mfg">Manufacturing</span> India = New Factory Floor</h3>
+      <p>PLI 2.0 + ₹62,500 Cr mobile scheme. Apple, Samsung, Google shifting production to India. EMS market growing 30%+ annually.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-alc">Premiumization</span> India's Young + Rich</h3>
+      <p>600M people under 30. Rising incomes driving premium alcohol, branded food, lifestyle. Indian whisky going global (Rampur, Amrut winning international awards).</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-ai">AI Infrastructure</span> $2T Market by 2031</h3>
+      <p>AI market projected to reach ~$2 trillion by 2031 (from $347B in 2026). Government + enterprise adoption in S-curve phase. Data = the new oil.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-bio">Gene Editing</span> Medicine's Next Chapter</h3>
+      <p>CRISPR-based therapies now FDA-approved. Platform tech — one engine, hundreds of diseases. Cardiovascular, cancer, rare diseases. $100B+ addressable market.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-ren">Clean Energy</span> Data Centers Need Power</h3>
+      <p>AI data centers consume massive power. Solar + storage is cheapest new electricity globally. US solar deployment accelerating despite politics.</p>
+    </div>
+    <div class="theme-card">
+      <h3><span class="pill p-fin">Digital Banking</span> Branch → App</h3>
+      <p>Banking moving fully digital. Neobanks with full charters capturing young customers. Lending, investing, insurance — all in one app.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== INDIA PICKS ========== -->
+<div class="sec">
+  <h2>India Picks — 4 Stocks</h2>
+  <p class="sub">Mid-cap sweet spot. Large enough to survive, small enough to 5-10x.</p>
+
+  <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem;">
+
+    <!-- Waaree Energies -->
+    <div class="stock-card" style="border-top: 3px solid var(--accent);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-solar">Solar</span>
+          <div class="ticker">WAAREEENER</div>
+          <div class="name">Waaree Energies Ltd</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">₹2,599</div>
+          <div class="mcap">MCap ₹73,984 Cr</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> ₹2,162 – ₹3,557</div>
+        <div class="metric"><span>PE</span> 16.9x</div>
+        <div class="metric"><span>FII</span> 8.57% (was 2.68% a year ago)</div>
+        <div class="metric"><span>Profit Q1</span> ₹850 Cr (+14%)</div>
+      </div>
+      <div class="thesis">
+        <b>India's largest solar panel manufacturer.</b> FII holdings tripled in one year — the biggest institutional conviction signal in this list. Lowest PE in the solar segment (16.9x vs peers at 40-60x). Benefiting from ALMM policy that blocks Chinese panels from Indian projects. India needs to add ~310 GW of solar capacity by 2030 — Waaree is the domestic capacity leader.
+      </div>
+      <ul class="why-list">
+        <li>China+1 beneficiary — global buyers diversifying away from Chinese solar</li>
+        <li>US factory planned for IRA subsidy capture (not dependent on India alone)</li>
+        <li>Order book robust, capacity expanding from 12 GW to 20 GW</li>
+        <li>IPO was Oct 2024 — still early in its listed life</li>
+      </ul>
+    </div>
+
+    <!-- Mazagon Dock -->
+    <div class="stock-card" style="border-top: 3px solid var(--green);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-def">Defence</span>
+          <div class="ticker">MAZDOCK</div>
+          <div class="name">Mazagon Dock Shipbuilders Ltd</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">₹1,904</div>
+          <div class="mcap">MCap ₹76,925 Cr</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> ₹1,688 – ₹2,848</div>
+        <div class="metric"><span>Profit CAGR</span> 44% (FY22–26)</div>
+        <div class="metric"><span>Promoter</span> 81% (Govt of India)</div>
+        <div class="metric"><span>Order Book</span> 7-8 yr revenue</div>
+      </div>
+      <div class="thesis">
+        <b>India's only warship builder for submarines and destroyers.</b> Functional monopoly — no private company can build submarines. Order book at ₹40,000+ Cr gives 7-8 years of revenue visibility. Profit growing at 44% CAGR since FY22. Defence Nifty index up 24% YTD. 33% below its 52-week high = attractive entry.
+      </div>
+      <ul class="why-list">
+        <li>Scorpene submarine program + next-gen P-75I submarine order (₹43,000 Cr)</li>
+        <li>India-Pakistan, India-China tensions → Navy modernization priority</li>
+        <li>Export potential — India now selling BrahMos, vessels to allies</li>
+        <li>Government will not privatize — strategic asset, guaranteed customer</li>
+      </ul>
+    </div>
+
+    <!-- Dixon Technologies -->
+    <div class="stock-card" style="border-top: 3px solid var(--blue);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-mfg">Manufacturing</span>
+          <div class="ticker">DIXON</div>
+          <div class="name">Dixon Technologies (India) Ltd</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">₹12,893</div>
+          <div class="mcap">MCap ₹79,522 Cr</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> ₹9,600 – ₹15,775</div>
+        <div class="metric"><span>Clients</span> Samsung, Xiaomi, Motorola, Google</div>
+        <div class="metric"><span>PLI 2.0</span> ₹62,500 Cr scheme</div>
+        <div class="metric"><span>JV</span> Inventec (Taiwan) for servers</div>
+      </div>
+      <div class="thesis">
+        <b>India's answer to Foxconn.</b> Largest domestic EMS company making smartphones, TVs, laptops and now servers. Just signed a JV with Taiwan's Inventec for notebook and server manufacturing. New ₹62,500 Cr government mobile scheme directly benefits Dixon. Moving up the value chain — bringing displays and camera modules in-house.
+      </div>
+      <ul class="why-list">
+        <li>India EMS market growing 30%+ annually — Dixon is the domestic leader</li>
+        <li>Diversifying beyond mobile into IT hardware, telecom, medical devices</li>
+        <li>Government push to make India an electronics export hub</li>
+        <li>18% below 52-wk high — reasonable entry after recent dip</li>
+      </ul>
+    </div>
+
+    <!-- Radico Khaitan -->
+    <div class="stock-card" style="border-top: 3px solid var(--purple);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-alc">Alcohol</span>
+          <div class="ticker">RADICO</div>
+          <div class="name">Radico Khaitan Ltd</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">₹4,646</div>
+          <div class="mcap">MCap ₹62,147 Cr</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> ₹2,500 – ₹4,747</div>
+        <div class="metric"><span>FII</span> ~19.4%</div>
+        <div class="metric"><span>Brands</span> Rampur, Jaisalmer, 8PM</div>
+        <div class="metric"><span>Up from low</span> +86%</div>
+      </div>
+      <div class="thesis">
+        <b>India's premium spirits play.</b> Owns Rampur Indian Single Malt (winning international whisky awards) and Jaisalmer Gin — both going global. India's alcohol market growing 7-8% annually, but premium segment growing 15-20%. Young population + rising incomes = structural tailwind for decades. Near its 52-wk high but the premiumization trend is just starting.
+      </div>
+      <ul class="why-list">
+        <li>Monopoly-like position in Indian premium spirits (Rampur, Jaisalmer)</li>
+        <li>International expansion — Rampur now in 50+ countries</li>
+        <li>Alcohol = sticky brand loyalty + pricing power + regulatory moat</li>
+        <li>FII holding ~19.4% signals strong institutional conviction</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== US PICKS ========== -->
+<div class="sec">
+  <h2>US Picks — 4 Stocks</h2>
+  <p class="sub">Fractional shares via INDmoney Global. Each pick trades at a meaningful discount from recent highs.</p>
+
+  <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem;">
+
+    <!-- Palantir -->
+    <div class="stock-card" style="border-top: 3px solid var(--cyan);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-ai">AI</span>
+          <div class="ticker">PLTR</div>
+          <div class="name">Palantir Technologies</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">$171.58</div>
+          <div class="mcap">MCap $415B</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> $106 – $213</div>
+        <div class="metric"><span>PE</span> 113x</div>
+        <div class="metric"><span>Rev Growth</span> +71% YoY</div>
+        <div class="metric"><span>Rev '26E</span> $7.7B</div>
+      </div>
+      <div class="thesis">
+        <b>The only pure-play AI infrastructure company at scale.</b> Revenue growing 71% YoY with commercial segment up 89%. Government contracts + enterprise AI adoption. Expensive at 113x PE, but growing into it fast. This is the "picks and shovels" play for the AI gold rush — they sell the platform everyone else builds on. 19% below ATH.
+      </div>
+      <ul class="why-list">
+        <li>AI market projected $347B → $2T by 2031 — Palantir is the enterprise OS for AI</li>
+        <li>Government revenue = sticky, multi-year contracts (defence, intelligence)</li>
+        <li>Commercial revenue now $3.9B — enterprises adopting AIP platform</li>
+        <li>S&P 500 inclusion drove institutional buying; Citi calling a "supercycle"</li>
+      </ul>
+    </div>
+
+    <!-- CRISPR -->
+    <div class="stock-card" style="border-top: 3px solid var(--red);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-bio">Biotech</span>
+          <div class="ticker">CRSP</div>
+          <div class="name">CRISPR Therapeutics AG</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">$42.62</div>
+          <div class="mcap">MCap $4.4B</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> $42 – $63</div>
+        <div class="metric"><span>Cash</span> $2.36B</div>
+        <div class="metric"><span>Casgevy Rev</span> +151% YoY (Q2)</div>
+        <div class="metric"><span>Approvals</span> 39 countries</div>
+      </div>
+      <div class="thesis">
+        <b>Gene editing is the next revolution in medicine.</b> Casgevy (sickle cell cure) revenue tripling in 2026. But the real story is the pipeline — CTX340 targets cardiovascular disease (a market 100x larger than sickle cell). Trading at its 52-week low with $2.36B cash. The risk/reward here is asymmetric: if even one pipeline drug works, this is a 10-bagger.
+      </div>
+      <ul class="why-list">
+        <li>Platform technology — one CRISPR engine, dozens of diseases to target</li>
+        <li>CTX340 (cardiovascular) and CTX460 in Phase 1 — massive addressable markets</li>
+        <li>$2.36B cash = years of runway, no dilution risk</li>
+        <li>At 52-wk low — market pricing in zero pipeline value</li>
+      </ul>
+    </div>
+
+    <!-- Enphase -->
+    <div class="stock-card" style="border-top: 3px solid var(--orange);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-ren">Renewable</span>
+          <div class="ticker">ENPH</div>
+          <div class="name">Enphase Energy Inc</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">$26.78</div>
+          <div class="mcap">MCap $3.7B</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> $24 – $74</div>
+        <div class="metric"><span>PE</span> 41x</div>
+        <div class="metric"><span>Down from ATH</span> -64%</div>
+        <div class="metric"><span>Sector</span> Solar microinverters</div>
+      </div>
+      <div class="thesis">
+        <b>Solar's "brain" — the microinverter that makes rooftop solar smart.</b> Down 64% from its 52-week high as solar sector went through a destocking cycle. But the structural story is intact: AI data centers need massive power, residential solar adoption accelerating globally, and Enphase has the best technology. This is the classic "buy the cycle low" play.
+      </div>
+      <ul class="why-list">
+        <li>Microinverter market leader — 50%+ US residential share</li>
+        <li>AI data center power demand creating a solar supercycle</li>
+        <li>Battery storage integration — becoming a home energy platform</li>
+        <li>Was $300+ in 2022, now $27 — massive mean reversion potential</li>
+      </ul>
+    </div>
+
+    <!-- SoFi -->
+    <div class="stock-card" style="border-top: 3px solid var(--accent2);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;">
+        <div>
+          <span class="pill p-fin">Fintech</span>
+          <div class="ticker">SOFI</div>
+          <div class="name">SoFi Technologies Inc</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="price">$15.63</div>
+          <div class="mcap">MCap $21.1B</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><span>52wk</span> $14 – $32</div>
+        <div class="metric"><span>PE</span> 28x</div>
+        <div class="metric"><span>Members</span> 10M+</div>
+        <div class="metric"><span>Bank Charter</span> Yes (OCC)</div>
+      </div>
+      <div class="thesis">
+        <b>The digital bank for millennials and Gen Z.</b> Full banking charter (rare for fintechs) means they can take deposits and lend — the most profitable business in finance. 10M+ members, growing fast. Lending, investing, credit cards, insurance, crypto — all in one app. Down 50% from its 52-week high. If digital banking wins (and it will), SoFi is the US leader.
+      </div>
+      <ul class="why-list">
+        <li>Full OCC banking charter — only fintech with this moat</li>
+        <li>Student loan refinancing + personal loans = high-margin core</li>
+        <li>Technology platform (Galileo) licensing to other fintechs</li>
+        <li>Path to profitability proven — PE 28x is reasonable for growth fintech</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ALLOCATION ========== -->
+<div class="sec">
+  <h2>₹2L Allocation — Buy Plan</h2>
+  <p class="sub">Split 60% India / 40% US. Equal-weight within each market for simplicity.</p>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>India — ₹1,10,000</h3>
+    <div class="alloc-bar" id="ind-bar"></div>
+    <div class="legend" id="ind-leg"></div>
+    <div style="overflow-x:auto;margin-top:.75rem;">
+      <table>
+        <thead><tr><th>Stock</th><th>Price</th><th>Qty</th><th>Amount</th><th>Theme</th></tr></thead>
+        <tbody id="ind-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>US — ~$850 (~₹80,000)</h3>
+    <div class="alloc-bar" id="us-bar"></div>
+    <div class="legend" id="us-leg"></div>
+    <div style="overflow-x:auto;margin-top:.75rem;">
+      <table>
+        <thead><tr><th>Stock</th><th>Price</th><th>Shares</th><th>Amount</th><th>Theme</th></tr></thead>
+        <tbody id="us-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3 style="margin-bottom:.5rem;">Reserve: ₹10,000</h3>
+    <p style="font-size:.82rem;color:var(--fg2);margin:0;">Keep in liquid fund or sweep FD. Deploy into whichever stock dips 10%+ in the next 3 months. If ENPH or CRSP drop significantly, average down on those — they have the widest upside range.</p>
+  </div>
+</div>
+
+<!-- ========== 5-YEAR PROJECTIONS ========== -->
+<div class="sec">
+  <h2>5-Year Scenarios — Where Could ₹2L Go?</h2>
+  <p class="sub">Based on each stock's growth trajectory, addressable market, and historical precedents in their sectors.</p>
+
+  <div class="scenario-grid" style="margin-top:.75rem;">
+    <div class="scenario-box">
+      <div class="val neg">₹4–6L</div>
+      <div class="label">Conservative (2–3x)<br>Market grows normally, no breakouts</div>
+    </div>
+    <div class="scenario-box" style="border:2px solid var(--accent);">
+      <div class="val" style="color:var(--accent);">₹10–16L</div>
+      <div class="label">Base Case (5–8x)<br>2-3 stocks deliver multi-bagger returns</div>
+    </div>
+    <div class="scenario-box">
+      <div class="val pos">₹25–50L</div>
+      <div class="label">Best Case (12–25x)<br>If a CRSP or Waaree does what NVDA did</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.75rem;">
+    <h3>Per-Stock 5-Year Range</h3>
+    <div style="overflow-x:auto;margin-top:.5rem;">
+      <table>
+        <thead><tr><th>Stock</th><th>Now</th><th>Conservative</th><th>Base</th><th>Bull</th><th>Logic</th></tr></thead>
+        <tbody>
+          <tr><td><b>WAAREEENER</b></td><td>₹2,599</td><td class="pos">₹6,500 (2.5x)</td><td class="pos">₹15,000 (5.8x)</td><td class="pos">₹25,000 (9.6x)</td><td style="font-size:.72rem;color:var(--fg2)">Solar capacity must 3x. Waaree = leader with lowest PE.</td></tr>
+          <tr><td><b>MAZDOCK</b></td><td>₹1,904</td><td class="pos">₹4,500 (2.4x)</td><td class="pos">₹8,000 (4.2x)</td><td class="pos">₹15,000 (7.9x)</td><td style="font-size:.72rem;color:var(--fg2)">Locked order book. 44% profit CAGR. Submarine orders.</td></tr>
+          <tr><td><b>DIXON</b></td><td>₹12,893</td><td class="pos">₹30,000 (2.3x)</td><td class="pos">₹60,000 (4.7x)</td><td class="pos">₹1,00,000 (7.8x)</td><td style="font-size:.72rem;color:var(--fg2)">India EMS 30%+ CAGR. PLI 2.0. Component integration.</td></tr>
+          <tr><td><b>RADICO</b></td><td>₹4,646</td><td class="pos">₹9,000 (1.9x)</td><td class="pos">₹18,000 (3.9x)</td><td class="pos">₹30,000 (6.5x)</td><td style="font-size:.72rem;color:var(--fg2)">Premium spirits 15-20% CAGR. International expansion.</td></tr>
+          <tr><td><b>PLTR</b></td><td>$172</td><td class="pos">$400 (2.3x)</td><td class="pos">$800 (4.7x)</td><td class="pos">$1,500 (8.7x)</td><td style="font-size:.72rem;color:var(--fg2)">AI platform. 71% rev growth. If it becomes the "Oracle of AI."</td></tr>
+          <tr><td><b>CRSP</b></td><td>$43</td><td class="pos">$80 (1.9x)</td><td class="pos">$200 (4.7x)</td><td class="pos">$500 (11.6x)</td><td style="font-size:.72rem;color:var(--fg2)">Pipeline optionality. If CTX340 works → cardiovascular is huge.</td></tr>
+          <tr><td><b>ENPH</b></td><td>$27</td><td class="pos">$70 (2.6x)</td><td class="pos">$150 (5.6x)</td><td class="pos">$300 (11.1x)</td><td style="font-size:.72rem;color:var(--fg2)">Was $300+ in 2022. Solar cycle recovery + AI power demand.</td></tr>
+          <tr><td><b>SOFI</b></td><td>$16</td><td class="pos">$35 (2.2x)</td><td class="pos">$80 (5x)</td><td class="pos">$150 (9.4x)</td><td style="font-size:.72rem;color:var(--fg2)">Digital banking wins. 10M → 50M members. Full bank charter.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== RISKS ========== -->
+<div class="sec">
+  <h2>Risk Factors — Eyes Open</h2>
+  <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem;">
+    <div class="card" style="border-left:3px solid var(--red);">
+      <h3>Concentration Risk</h3>
+      <p style="font-size:.82rem;color:var(--fg2);margin:.25rem 0 0;">8 stocks is concentrated. If one sector gets hit (e.g., solar tariffs, defence budget cut), your portfolio takes a bigger hit than a diversified fund.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--orange);">
+      <h3>Valuation Risk (PLTR)</h3>
+      <p style="font-size:.82rem;color:var(--fg2);margin:.25rem 0 0;">Palantir at 113x PE is priced for perfection. Any growth slowdown = sharp correction. The AI theme could have a dot-com style pullback.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--accent);">
+      <h3>Pipeline Risk (CRSP)</h3>
+      <p style="font-size:.82rem;color:var(--fg2);margin:.25rem 0 0;">CRISPR is still loss-making. If clinical trials fail, the stock could halve. This is the highest-risk, highest-reward pick.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--blue);">
+      <h3>Policy Risk (India)</h3>
+      <p style="font-size:.82rem;color:var(--fg2);margin:.25rem 0 0;">PLI subsidies could change. ALMM policy could be relaxed. Defence orders can delay. These are government-dependent stories.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--purple);">
+      <h3>Currency Risk (US stocks)</h3>
+      <p style="font-size:.82rem;color:var(--fg2);margin:.25rem 0 0;">If INR strengthens against USD, your US returns get diluted in rupee terms. Currently ₹94/$1.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== RULES ========== -->
+<div class="sec" style="border-bottom:none;">
+  <h2>Protective Rules</h2>
+  <div class="card" style="margin-top:.5rem;">
+    <ul class="why-list">
+      <li><b>Buy in 2 tranches:</b> Invest 60% now (Nov 2026), remaining 40% over Dec–Feb 2027 on dips</li>
+      <li><b>Stop-loss for US picks:</b> If any US stock drops 30% from your entry, review but don't panic-sell</li>
+      <li><b>Annual review:</b> Check thesis once a year. If the thesis breaks (loss of contract, failed trial), exit</li>
+      <li><b>Rebalance at 2x:</b> When any stock doubles, sell 25% to book profits and redistribute</li>
+      <li><b>Never go all-in:</b> This ₹2L is your growth bet. Your ₹3L plan (the other page) is your core portfolio</li>
+    </ul>
+  </div>
+
+  <div class="disclaimer">
+    <b>Disclaimer:</b> This is an engine-generated analysis based on publicly available data, not personalized investment advice. I am not a licensed investment adviser. Past performance (NVDA, Paytm, Sun Pharma examples) does not guarantee future returns. Multi-bagger outcomes are possible but far from certain — most stocks do NOT achieve 5-10x returns. Invest only what you can afford to hold for 5 years without needing it. Consult a registered investment adviser before making investment decisions.
+  </div>
+</div>
+
+<script>
+const IND=[
+  {s:"WAAREEENER",p:2599,q:11,sec:"Solar",c:"#f59e0b"},
+  {s:"MAZDOCK",p:1904,q:15,sec:"Defence",c:"#22c55e"},
+  {s:"DIXON",p:12893,q:2,sec:"Manufacturing",c:"#3b82f6"},
+  {s:"RADICO",p:4646,q:6,sec:"Alcohol",c:"#a78bfa"}
+];
+const US=[
+  {s:"PLTR",p:171.58,q:1.5,sec:"AI",c:"#06b6d4"},
+  {s:"CRSP",p:42.62,q:5,sec:"Biotech",c:"#ef4444"},
+  {s:"ENPH",p:26.78,q:8,sec:"Renewable",c:"#f97316"},
+  {s:"SOFI",p:15.63,q:13,sec:"Fintech",c:"#10b981"}
+];
+function renderBar(items,barId,legId,tbId,isUS){
+  const tot=items.reduce((s,i)=>s+i.q*i.p,0);
+  document.getElementById(barId).innerHTML=items.map(i=>{
+    const pct=i.q*i.p/tot*100;
+    return `<div class="alloc-seg" style="width:${pct}%;background:${i.c}" title="${i.s}: ${pct.toFixed(1)}%">${pct>12?Math.round(pct)+'%':''}</div>`;
+  }).join("");
+  document.getElementById(legId).innerHTML=items.map(i=>`<span><span class="legend-dot" style="background:${i.c}"></span>${i.s} (${(i.q*i.p/tot*100).toFixed(0)}%)</span>`).join("");
+  const tb=document.getElementById(tbId);
+  tb.innerHTML=items.map(i=>{
+    const a=i.q*i.p;
+    const px=isUS?'$'+i.p.toFixed(2):'₹'+Math.round(i.p).toLocaleString("en-IN");
+    const am=isUS?'$'+Math.round(a):'₹'+Math.round(a).toLocaleString("en-IN");
+    return `<tr><td><b>${i.s}</b></td><td>${px}</td><td>${i.q}</td><td>${am}</td><td>${i.sec}</td></tr>`;
+  }).join("");
+}
+renderBar(IND,"ind-bar","ind-leg","ind-tbody",false);
+renderBar(US,"us-bar","us-leg","us-tbody",true);
+</script>
